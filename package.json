@@ -1,0 +1,35 @@
+{
+    "name": "nodelib2-utils",
+    "version": "1.0.0",
+    "author": "billy LSQ <billypc@163.com>",
+    "description": "A JavaScript utility library that provides practical global methods. And provide extras for built-in objects such as Function, Array, Number, String, etc",
+    "main": "index.js",
+    "types": "./index.d.ts",
+    "files": [
+        "base",
+        "utils",
+        "index.js",
+        "index.d.ts"
+    ],
+    "keywords": [
+        "nodelib2",
+        "defineProperty",
+        "String extras",
+        "Function extras",
+        "Array extras",
+        "Number extras",
+        "merge",
+        "trace",
+        "debounce",
+        "String sorting"
+    ],
+    "homepage": "https://github.com/billypc025/nodelib2-utils",
+    "repository": "git://github.com/billypc025/nodelib2-utils.git",
+    "engines": {
+        "node": ">=16"
+    },
+    "license": "MIT",
+    "peerDependencies": {
+        "typescript": "^5.0.0"
+    }
+}
