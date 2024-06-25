@@ -1,5 +1,3 @@
-import { getMonthByOffset } from './utils/time'
-
 interface time {
     YEAR: 'YY'
     YEAR_SHORT: 'Y'
