@@ -1,4 +1,4 @@
-# nodelib-canvas
+# nodelib2-utils
 
 **JavaScript 实用程序库，为常用内置对象 `Function`、`Array`、`Number`、`String` 提供了好用的额外功能，并且提供了一些实用的全局方法（如`trace`用于结果打印、`__def`用于自定义属性、`paramFormat`用于格式化字符串、`__merge`用于合并对象、`sortString`可根据排序规则对字符串序列进行排序）**
 
