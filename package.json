@@ -31,5 +31,8 @@
     "license": "MIT",
     "peerDependencies": {
         "typescript": "^5.0.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.5.2"
     }
 }
