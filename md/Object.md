@@ -1,4 +1,4 @@
-# Array Extras
+# Object Extras
 
 ## `__add()`
 
