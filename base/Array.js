@@ -2,37 +2,57 @@
  * Created by billy on 2020/11/11.
  */
 
-const { __def } = require('../utils/defineProperty')
-
-function setup(targetObj, properties) {
-    Object.keys(properties).forEach(v => {
-        properties[v] = { value: properties[v] }
-    })
-    Object.defineProperties(targetObj, properties)
-}
+const { __setup } = require('./utils_global')
 
 Array.fromLength = (len, mapFn) =>
-    mapFn ? new Array(len).fill(0).map((v, i, a) => mapFn(i, a)) : new Array(len).fill(0)
+    mapFn
+        ? typeof mapFn != 'function'
+            ? new Array(len).fill(mapFn)
+            : new Array(len).fill(0).map((v, i, a) => mapFn(i, a))
+        : new Array(len).fill(0)
 
-setup(Array.prototype, {
-    toHash,
-    mergeTo,
-    mergeList,
-    getCountGroupBy,
-    toListBy,
-    sortByKeyList,
-    add,
-    addFirst,
-    remove,
-    removeItem,
-    removeLast,
-    removeFirst,
-    forEachReturn,
-    match,
-    mapToHash,
-    charSort,
-    filterBy,
-})
+__setup(
+    {
+        toHash,
+        mergeTo,
+        mergeList,
+        getCountGroupBy,
+        toListBy,
+        sortByKeyList,
+        add,
+        addFirst,
+        remove,
+        removeItem,
+        removeLast,
+        removeFirst,
+        forEachReturn,
+        forEachAsync,
+        match,
+        mapToHash,
+        charSort,
+        filterBy,
+        firstItem,
+        lastItem,
+        replace,
+        findLast,
+        findLastIndex,
+    },
+    Array.prototype
+)
+__setup(
+    {
+        last: {
+            get() {
+                return this[this.length - 1]
+            },
+            set(v) {
+                this[this.length - 1] = v
+            },
+        },
+    },
+    Array.prototype,
+    'gs'
+)
 
 //数组转object
 function toHash(key = 'id', valueGroup = false, valKey = '') {
@@ -118,8 +138,7 @@ function mergeTo(kvObj, key, targetKey = null) {
  * list1.mergeList(list2,"sid","id");
  * 结果: [{id:1,name:"A",age:11}]
  */
-function mergeList(list, key, mergeKey = '', mergeFunc = __merge) {
-    mergeKey = mergeKey || key
+function mergeList(list, key, mergeKey, mergeFunc = __merge) {
     let kvo = list.reduce((o, v) => ((o[v[key]] = v) && delete v[key] && !1) || o, {})
     this.forEach(v => mergeFunc(v, kvo[v[mergeKey]]))
     return this
@@ -158,7 +177,7 @@ function addFirst(...arg) {
     return this
 }
 
-function remove(startIndex = 0, len = 1) {
+function remove(startIndex, len = 1) {
     this.splice(startIndex, len)
     return this
 }
@@ -172,34 +191,50 @@ function removeItem(item) {
 }
 
 function removeLast(n = 1) {
-    n = Math.min(Math.max(1, n), this.length)
-    this.splice(this.length - n, n)
-    return this
+    return (n = Math.min(Math.max(1, n), this.length)), this.splice(this.length - n, n), this
 }
 
 function removeFirst(n = 1) {
-    n = Math.min(Math.max(1, n), this.length)
-    this.splice(0, n)
-    return this
+    return (n = Math.min(Math.max(1, n), this.length)), this.splice(0, n), this
 }
 
 function forEachReturn(f) {
-    this.forEach(f)
-    return this
+    return this.forEach(f), this
+}
+
+function forEachAsync(f) {
+    let self = this
+    return new Promise((resolved, reject) => {
+        ;(async function () {
+            for (let i = 0; i < self.length; i++) {
+                await f(self[i], i, self)
+            }
+            resolved(self)
+        })()
+    })
 }
 
 function match(f) {
     let result = null
-    for (let i in this) {
-        result = f(this[i], i, this)
+    for (let i = 0; i < this.length; i++) {
+        result = f(this[i], Number(i), this)
         if (result) return result
     }
     return result
 }
 
 function mapToHash(f1, f2 = null) {
-    !!f2 && ([f2, f1] = [f1, f2])
-    return this.reduce((o, v, i, a) => ((o[f2 ? f2(v, i, a, o) : v] = f1(v, i, a, o)) && !1) || o, {})
+    return this.length == 0
+        ? {}
+        : (!!f2 && ([f2, f1] = [f1, f2]),
+          this.reduce(
+              (o, v, i, a, k) => (
+                  (k = f2 ? f2(v, i, a, o) : v),
+                  ['string', 'number'].includes(typeof k) && k != '' && (o[k] = f1 ? f1(v, i, a, o) : k),
+                  o
+              ),
+              {}
+          ))
 }
 
 Array.SORT_length_char = 0 //长度升序 + 字符unicode升序
@@ -257,7 +292,6 @@ function charSort(executor = null, rule = 0) {
     executor !== null && typeof executor == 'number' && (rule = executor) && (executor = null)
     return this.sort((a, b) => (executor && executor(_charSortCore[rule], a, b)) || _charSortCore[rule](a, b))
 }
-
 function filterBy(filtValue, option = true) {
     if (typeof filtValue === 'function') {
         return this.filter(filtValue)
@@ -298,7 +332,6 @@ function filterBy(filtValue, option = true) {
     }
     return this
 }
-
 function getFilterOption(option) {
     if (typeof option == 'object') {
         let { key = '', contain = true, fix = '' } = option
@@ -319,4 +352,39 @@ function getFilterValueByOptionKey(value, optionsKey) {
         }
     }
     return value
+}
+function firstItem(n = 1) {
+    n = Math.min(Math.max(1, n), this.length)
+    return this.slice(0, n)
+}
+function lastItem(n = 1) {
+    n = Math.min(Math.max(1, n), this.length)
+    return this.slice(this.length - n)
+}
+function replace(fn) {
+    for (let i = this.length - 1, v; i >= 0; i--) {
+        v =
+            fn &&
+            fn(this[i], i, this, () => {
+                this.splice(i, 1)
+            })
+        v !== undefined && (this[i] = v)
+    }
+    return this
+}
+function findLast(fn) {
+    for (let i = this.length - 1; i >= 0; i--) {
+        if (fn(this[i], i, this)) {
+            return this[i]
+        }
+    }
+    return null
+}
+function findLastIndex(fn) {
+    for (let i = this.length - 1; i >= 0; i--) {
+        if (fn(this[i], i, this)) {
+            return i
+        }
+    }
+    return null
 }

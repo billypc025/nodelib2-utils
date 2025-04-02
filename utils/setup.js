@@ -30,8 +30,53 @@ $global.isBrowser =
     typeof localStorage !== 'undefined' &&
     typeof localStorage.getItem === 'function' &&
     typeof TouchEvent === 'function'
-    
+
 $global.global = $global
-module.exports = (requireModule, scope = $global) => {
-    Object.assign(scope, requireModule)
+
+$global.__forEachAsync = async (target, fn) => {
+    if (Array.isArray(target)) {
+        for (let i = 0; i < target.length; i++) {
+            await fn(target[i], i, target)
+        }
+    } else if (typeof target == 'object') {
+        let keys = Object.keys(target)
+        for (let i = 0; i < keys.length; i++) {
+            await fn(target[keys[i]], keys[i], target)
+        }
+    } else {
+        await fn(target)
+    }
+    return target
+}
+$global.__sleep = (millisecond = 0) => {
+    let startTime = Date.now()
+    white(Date.now() - startTime < millisecond)
+}
+
+module.exports = {
+    __setup(requireModule, scope, ...arg) {
+        scope = scope || $global
+        let dk = 'value',
+            filter = null
+        arg.forEach(v => {
+            typeof v == 'string' && (dk = v)
+            Array.isArray(v) && v.length > 0 && v.every(i => typeof i === 'string') && (filter = v)
+        })
+        filter && (requireModule = pick(requireModule, filter))
+        Object.defineProperties(
+            scope,
+            requireModule.__map(v => (dk == 'gs' ? { ...v } : { [dk]: v }))
+        )
+        // }
+    },
+    __export(modules) {
+        return __def(
+            {},
+            modules.__map(v =>
+                typeof v == 'string'
+                    ? ((v = /^(\.|\/)/.test(v) ? __libPath(v) : v) && !1) || __def_get('e', () => require(v))
+                    : __def_get('e', v)
+            )
+        )
+    },
 }

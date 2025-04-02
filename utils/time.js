@@ -49,7 +49,7 @@ function _getTime(dateOrTime) {
     return dateOrTime
 }
 
-exports.getFullDate = function (dateOrTime, doubleDigit = false) {
+exports.getFullDate = function (dateOrTime = Date.now(), doubleDigit = false) {
     if (typeof dateOrTime === 'boolean') {
         doubleDigit = dateOrTime
         dateOrTime = Date.now()
@@ -57,12 +57,22 @@ exports.getFullDate = function (dateOrTime, doubleDigit = false) {
     return doubleDigit ? formatTime(dateOrTime, DATE_TIME) : formatTime(dateOrTime, 'YYYY-M-D h:m:s')
 }
 
-exports.getFullDateArray = function (dateOrTime) {
+exports.getFullDateArray = function (dateOrTime = Date.now(), doubleDigit = false) {
     let date = new Date(_getTime(dateOrTime))
+    if (doubleDigit === true) {
+        return [
+            padStart(date.getFullYear(), 2, 0),
+            padStart(date.getMonth(), 2, 0),
+            padStart(date.getDate(), 2, 0),
+            padStart(date.getHours(), 2, 0),
+            padStart(date.getMinutes(), 2, 0),
+            padStart(date.getSeconds(), 2, 0),
+        ]
+    }
     return [date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()]
 }
 
-exports.getTime = function (dateOrTime, doubleDigit = false) {
+exports.getTime = function (dateOrTime = Date.now(), doubleDigit = false) {
     if (typeof dateOrTime === 'boolean') {
         doubleDigit = dateOrTime
         dateOrTime = Date.now()
@@ -70,12 +80,12 @@ exports.getTime = function (dateOrTime, doubleDigit = false) {
     return doubleDigit ? formatTime(dateOrTime, HMS) : formatTime(dateOrTime, 'h:m:s')
 }
 
-exports.getTimeArray = function (dateOrTime) {
+exports.getTimeArray = function (dateOrTime = Date.now()) {
     let date = new Date(_getTime(dateOrTime))
     return [date.getHours(), date.getMinutes(), date.getSeconds()]
 }
 
-exports.getDate = function (dateOrTime, doubleDigit = false) {
+exports.getDate = function (dateOrTime = Date.now(), doubleDigit = false) {
     if (typeof dateOrTime === 'boolean') {
         doubleDigit = dateOrTime
         dateOrTime = Date.now()
@@ -83,7 +93,7 @@ exports.getDate = function (dateOrTime, doubleDigit = false) {
     return doubleDigit ? formatTime(dateOrTime, FULL_DATE) : formatTime(dateOrTime, 'YYYY-M-D')
 }
 
-exports.getDateArray = function (dateOrTime) {
+exports.getDateArray = function (dateOrTime = Date.now()) {
     let date = new Date(_getTime(dateOrTime))
     return [date.getFullYear(), date.getMonth(), date.getDate()]
 }
@@ -96,16 +106,16 @@ exports.getNowStamp = function (millisecond = false) {
 function _getBasicTimeArray(time) {
     let date = new Date(time)
     return [
-        `${date.getFullYear()}`.padStart(2, '0'),
-        `${date.getMonth()}`.padStart(2, '0'),
-        `${date.getDate()}`.padStart(2, '0'),
-        `${date.getHours()}`.padStart(2, '0'),
-        `${date.getMinutes()}`.padStart(2, '0'),
-        `${date.getSeconds()}`.padStart(2, '0'),
+        padStart(date.getFullYear(), 2, 0),
+        padStart(date.getMonth(), 2, 0),
+        padStart(date.getDate(), 2, 0),
+        padStart(date.getHours(), 2, 0),
+        padStart(date.getMinutes(), 2, 0),
+        padStart(date.getSeconds(), 2, 0),
     ]
 }
 
-function formatTime(dateOrTime, format = DATE_TIME) {
+function formatTime(dateOrTime = Date.now(), format = DATE_TIME) {
     if (typeof dateOrTime === 'string') {
         format = dateOrTime
         dateOrTime = Date.now()
@@ -115,16 +125,16 @@ function formatTime(dateOrTime, format = DATE_TIME) {
         .replace(/YYYY/g, Y)
         .replace(/yyyy/g, Y)
         .replace(/YY/g, `${Y}`.substring(2))
-        .replace(/MM/g, M)
-        .replace(/M/g, M - 0)
-        .replace(/DD/g, D)
-        .replace(/dd/g, D)
+        .replace(/MM/g, `${M - 0 + 1}`.padStart(2, '0'))
+        .replace(/M/g, M - 0 + 1)
+        .replace(/DD/g, `${D}`.padStart(2, '0'))
+        .replace(/dd/g, `${D}`.padStart(2, '0'))
         .replace(/D/g, D - 0)
-        .replace(/hh/g, h)
+        .replace(/hh/g, `${h}`.padStart(2, '0'))
         .replace(/h/g, h - 0)
-        .replace(/mm/g, m)
+        .replace(/mm/g, `${m}`.padStart(2, '0'))
         .replace(/m/g, m - 0)
-        .replace(/ss/g, s)
+        .replace(/ss/g, `${s}`.padStart(2, '0'))
         .replace(/s/g, s - 0)
 }
 exports.formatTime = formatTime
@@ -143,14 +153,14 @@ exports.getCountDown = function (second = 0, format = DHMS) {
         }
     }
     return format
-        .replace(/DD/g, D)
-        .replace(/dd/g, D)
+        .replace(/DD/g, `${D}`.padStart(2, '0'))
+        .replace(/dd/g, `${D}`.padStart(2, '0'))
         .replace(/D/g, D - 0)
-        .replace(/hh/g, h)
+        .replace(/hh/g, `${h}`.padStart(2, '0'))
         .replace(/h/g, h - 0)
-        .replace(/mm/g, m)
+        .replace(/mm/g, `${m}`.padStart(2, '0'))
         .replace('m', m - 0)
-        .replace(/ss/g, s)
+        .replace(/ss/g, `${s}`.padStart(2, '0'))
         .replace('s', s - 0)
 }
 
@@ -158,7 +168,7 @@ exports.getTimer = function () {
     return Date.now() - __START_TIME
 }
 
-function getCountDownArray(second) {
+function getCountDownArray(second = 0) {
     return [parseInt(second / 86400), parseInt((second % 86400) / 3600), parseInt((second % 3600) / 60), second % 60]
 }
 exports.getCountDownArray = getCountDownArray

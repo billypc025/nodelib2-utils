@@ -1,4 +1,9 @@
 const TAG_KEYS = ['configurable', 'enumerable', 'writable']
+const DEF_TYPE = {
+    get [Symbol.toStringTag]() {
+        return '__def_prop'
+    },
+}
 
 function __def(...arg) {
     let {
@@ -10,26 +15,13 @@ function __def(...arg) {
         arg
     )
 
-    // for (let key in properties) {
-    //     let v = properties[key]
-    //     if (getType(v) === '__def_prop') {
-    //         if (!!v.get || !!v.set) {
-    //             properties[key] = deleteTag({ ...getTag(tag), ...v }, 'vw')
-    //         } else {
-    //             properties[key] = deleteTag({ ...getTag(tag), ...v }, 'gs')
-    //         }
-    //     } else {
-    //         properties[key] = __def_value(tag, v)
-    //     }
-    // }
-
     let toBindObj = tag.indexOf('b') >= 0
     toBindObj && (tag = tag.replace(/b/g, ''))
 
     Object.defineProperty(obj, toBindObj ? '__def_bind' : '__def', { value: true, ...getTag('') })
     return Object.defineProperties(
         obj,
-        Object.keys(properties).reduce((o, key) => {
+        properties.__keys.reduce((o, key) => {
             let v = properties[key]
             if (getType(v) === '__def_prop') {
                 if (!!v.get || !!v.set) {
@@ -105,19 +97,22 @@ function __def_gs(...arg) {
         tag = '',
         get,
         set,
-    } = Function.getParamsWith(['tag:string, get:Function, set:Function', 'get:Function, set:Function'], arg)
-    return deleteTag({ ...getTag(tag), ...(!!get ? { get } : {}), ...(!!set ? { set } : {}) }, 'w')
+        accessors,
+    } = Function.getParamsWith(
+        [
+            'tag:string, get:Function, set:Function',
+            'get:Function, set:Function',
+            'tag:string, accessors:{get:Function,set:Function}',
+            'accessors:{get:Function,set:Function}',
+        ],
+        arg
+    )
+    return deleteTag({ ...getTag(tag), ...(accessors || { get, set }), ...DEF_TYPE }, 'w')
 }
 
 function getValue(propertyKey, arg) {
     let { tag = '', value } = Function.getParamsWith(['tag:string, value:any', 'value:any'], arg)
-    return {
-        ...getTag(tag),
-        [propertyKey]: value,
-        get [Symbol.toStringTag]() {
-            return '__def_prop'
-        },
-    }
+    return { ...getTag(tag), [propertyKey]: value, ...DEF_TYPE }
 }
 
 function deleteTag(obj, tag) {

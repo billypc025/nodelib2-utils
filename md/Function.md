@@ -11,12 +11,16 @@ getParamsWith(paramDefRules: string[], args: any[]): { [k: string]: any }
 ```
 
 示例
+
 ```js
 /* 示例一
-  例如实现hello函数以满足以下3个定义:
+  定义hello函数实现重载的效果, 满足3种入参方式:
+  
   function hello(name: string, age?: number|string, someSpeak?: string): void
-  function hello(name: string, someSpeak: string): void
-  function hello(obj: { name: string; age?: number|string; someSpeak?: string }): void
+
+  function hello(name: string, someSpeak: string,age?: number): void
+  
+  function hello(obj: { name: string; age?: number; someSpeak?: string }): void
 */
 
 const hello = (...arg) => {
@@ -25,19 +29,26 @@ const hello = (...arg) => {
         age = 0,
         someSpeak = '',
     } = Function.getParamsWith(
-        ['name:string, age?:number|string, someSpeak?:string', 'name:string, someSpeak:string', 'object'],
+        ['name:string, age?:number, someSpeak?:string', 'name:string, someSpeak:string, age?:number', 'object'],
         arg
     )
     console.log(`hello ${name}.${age > 0 ? ` I am ${age} years old.` : ''}${someSpeak ? ` ${someSpeak}` : ''}`)
 }
+
+hello('billy', 40, 'farewell!')
+// => 'hello billy. I am 40 years old. farewell!'
+
+hello('billy', 'farewell!', 40)
+// => 'hello billy. I am 40 years old. farewell!'
+
 hello('billy', 40)
-// => hello billy. I am 40 years old.
+// => 'hello billy. I am 40 years old.'
 
 hello('billy', 'farewell!')
-// => hello billy. farewell!
+// => 'hello billy. farewell!'
 
-hello({ name: 'billy', age: 30 })
-// => hello billy. I am 40 years old.
+hello({ name: 'billy', age: 40 })
+// => 'hello billy. I am 40 years old.'
 ```
 
 ```js
@@ -62,18 +73,56 @@ function createInterval() {
     _intervalCache[name].push(setInterval(executor, time * 1000, ...params))
 }
 
-createInterval('task:autoSave', autoSave, param1, param2)
-createInterval('task:notice', fetch, 7200, url, init)
+function autoSave(file_path) {
+    // 每隔60秒执行一次自动保存文件
+    trace('autoSave', file_path)
+}
+function fetch(url, default_value) {
+    // 每隔7200秒执行一次fetch url
+    trace('fetch', url, default_value)
+}
+const socket = {
+    sendHeartbeat() {
+        // 每隔90秒执行一次发送心跳
+        trace('socket.sendHeartbeat')
+    },
+}
+
+createInterval('task:autoSave', autoSave, 60, 'file_path')
+createInterval('task:notice', fetch, 7200, 'web_url', 'default_value')
 createInterval('heartbeat', socket.sendHeartbeat, 90)
 ```
 
 ```js
 // 示例三
 function foo() {
-    let { a = 'a', b } = Function.getParamsWith(['a:string, b:string', 'b:string'], arguments)
+    let { a = 'a', b } = Function.getParamsWith(
+        [
+            'a:string, b:string',
+            'b:string'
+        ],
+        arguments
+    )
     trace(a + b)
 }
-foo() // 缺失了必要参数，会抛出Error
+foo() // 缺失了必要参数, throw Error
 foo('A', 'B') // => AB   (匹配到第1条规则)
 foo('B') // => aB   (必要参数只有1个，匹配到第2条规则)
+```
+
+```js
+// 示例四: 类型为{[key:string]: <type>}
+function test(...arg) {
+    let { a, b } = Function.getParamsWith(
+        [
+            'a:{[k]:string[]}, b:{add:string}',
+            'b:{add:string}, a:{[k]:string[]}'
+        ],
+        arg
+    )
+    trace({ a, b })
+}
+
+test({ add: [] }, { add: '' }) // => { a: { add: [] }, b: { add: '' } }
+test({ add: '' }, { add: [] }) // => { a: { add: [] }, b: { add: '' } }
 ```

@@ -272,6 +272,7 @@ parseUrl(url: string): {
         query: { [k: string]: any }
         domain: string
         port: number
+        protocol: string
     }
 
 function padStart(value: any, maxLength: number, fillString?: string | undefined): string
@@ -279,6 +280,18 @@ function padStart(value: any, maxLength: number, fillString?: string | undefined
 function padEnd(value: any, maxLength: number, fillString?: string | undefined): string
 
 function repeat(value: any, count: number): string
+
+/**
+ * 从目标对象中 pick 指定的属性, 生成新的Object
+ *
+ * let obj = { a: 1, b: 2, c: 3, d: 4 }
+ * pick(obj, 'a', 'c') // => {a:1, c:3}
+ * pick(obj, ['a', 'c']) // => {a:1, c:3}
+ */
+function pick(obj: object, ...keys: string[]): object
+
+// 计算目标字符串的字节长度 (中文及部分全角符号计作2)
+function getBytesLen(str: any): number
 ```
 
 -   `__promise`

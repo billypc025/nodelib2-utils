@@ -12,7 +12,7 @@ String.prototype.paramFormat = function (...arg) {
     let str = this
     return ((typeof arg[0] === 'object' && (arg = arg[0]) && 0) || Object.keys(arg)).reduce(
         (str, k) => str.replace(new RegExp(`\\{${k}\\}`, 'g'), arg[k]),
-        str
+        str + ''
     )
 }
 

@@ -16,6 +16,7 @@ npm i --save nodelib2-utils
 -   [Array extras API](./md/Array.md)
 -   [String extras API](./md/String.md)
 -   [Number extras API](./md/Number.md)
+-   [Object extras API](./md/Object.md)
 -   [Global function](./md/global.md)
 -   [Global tool: g.time](./md/time.md)
 

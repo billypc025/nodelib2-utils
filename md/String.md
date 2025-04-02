@@ -37,7 +37,7 @@ htmlTemplate.paramFormat({ keyName: '姓名', valueType: 'string' })
 compare(str: string, rule: 'lengthFirst' | 'charFirst'): number
 ```
 
-> lengthFirst 用于排序的场景:
+> lengthFirst 排序后的结果:
 >
 > -   c
 > -   a11
@@ -45,7 +45,7 @@ compare(str: string, rule: 'lengthFirst' | 'charFirst'): number
 > -   a111
 > -   b111
 >
-> charFirst 用于排序的场景:
+> charFirst 排序后的结果:
 >
 > -   a11
 > -   a111

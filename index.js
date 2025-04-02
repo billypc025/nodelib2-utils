@@ -2,17 +2,21 @@
  * Created by billy on 2017/2/20.
  */
 
-const setup = require('./utils/setup')
+const { __setup, __export } = require('./utils/setup')
+require('./base/Object') // Object 扩展
 require('./base/Function') // Function 扩展
 require('./base/Array') // Array 扩展
 require('./base/String') // String 扩展
 require('./base/Number') // Number 扩展
-setup(require('./utils/utils')) // 常用工具方法
-setup(require('./utils/instance')) // 实例缓存
-setup(require('./utils/defineProperty')) // Object.defineProperties 扩展
-global.trace = console.log
-global.g = {}
-g.time = require('./utils/time') //时间日期 模块
-g.setup = setup
+__setup(require('./utils/utils')) // 常用工具方法
+__setup(require('./utils/instance')) // 实例缓存
+__setup(require('./utils/defineProperty')) // Object.defineProperties 扩展
 
-module.exports = g
+global.trace = console.log
+
+module.exports = __setup({
+    g: __export({
+        time: './utils/time',
+    }),
+    __setup,
+})

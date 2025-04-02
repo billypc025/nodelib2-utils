@@ -21,7 +21,7 @@ function getParamsWith($paramScheme, [...arg]) {
                 let type = v[v.length - 1]
                 return (
                     type === 'any' ||
-                    sortType(arg[i], type) ||
+                    isFit(arg[i], type) ||
                     (arg.length <= i && v[1] === '?:') ||
                     (i === paramGroup.length - 1 && restArgsRegExp.test(type))
                 )
@@ -52,19 +52,19 @@ function getParamsWith($paramScheme, [...arg]) {
     }, {})
 }
 
-function sortType(val, targetType) {
-    let objectTypeMatch = targetType.match(object)
+function isFit(val, defType) {
+    if (defType == 'any') {
+        return true
+    } else if (defType == 'Function') {
+        defType = 'function'
+    }
+    let objectTypeMatch = defType.match(object)
     if (objectTypeMatch && typeof val === 'object') {
-        return getObjectType(targetType).every(t => {
-            if (t[0] in val) {
-                return sortType(val[t[0]], t[t.length - 1])
-            }
-            return t[1] === '?:' && t.length === 3
-        })
+        return fitObjectType(val, defType)
     } else {
         let valType = getValueType(val)
-        if (targetType.indexOf('|') > 0) {
-            return targetType.split('|').some(v => {
+        if (defType.indexOf('|') > 0) {
+            return defType.split('|').some(v => {
                 if (v.toLowerCase() === valType) {
                     return true
                 }
@@ -80,12 +80,12 @@ function sortType(val, targetType) {
         }
         if (Array.isArray(valType)) {
             return (
-                targetType === 'any[]' ||
-                valType[0] + '[]' === targetType ||
-                (valType[0] === 'any' && v.substring(v.length - 2) === '[]')
+                defType === 'any[]' ||
+                valType[0] + '[]' === defType ||
+                (valType[0] === 'any' && defType.substring(defType.length - 2) === '[]')
             )
         }
-        return targetType === valType
+        return defType === valType
     }
 }
 
@@ -100,8 +100,23 @@ function getValueType($val) {
     return 'object'
 }
 
+function fitObjectType(val, targetType) {
+    targetType = targetType.substring(1, targetType.length - 1).replace(/^\s+|\s+$/g, '')
+    if (/^\[[^\[\]]+\]\s*:.+$/.test(targetType)) {
+        targetType = targetType.replace(/^\[.+?\]/g, 'key')
+        targetType = getObjectType(targetType)[0].pop()
+        return Object.keys(val).every(k => isFit(val[k], targetType))
+    } else {
+        return getObjectType(targetType).every(t => {
+            if (t[0] in val) {
+                return isFit(val[t[0]], t[t.length - 1])
+            }
+            return t[1] === '?:' && t.length === 3
+        })
+    }
+}
+
 function getObjectType(typeString) {
-    typeString = typeString.substring(1, typeString.length - 1)
     return typeString.match(typeRegExp).map(v => v.match(typeDetailRegExp))
 }
 

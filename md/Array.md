@@ -16,6 +16,9 @@ fromLength<T>(len: number, mapFn?: (index: number, array: T<any>[]) => any): T<a
 // Each item is 0
 Array.fromLength(5) // => [0, 0, 0, 0, 0]
 
+// Each item is defaultValue
+Array.fromLength(5, 'ok') // => ['ok', 'ok', 'ok', 'ok', 'ok']
+
 // Each item is index
 Array.fromLength(5, v => v) // => [0, 1, 2, 3, 4]
 
@@ -70,17 +73,29 @@ forEachReturn<T>(callbackfn: (value: T, index: number, array: readonly T[]) => v
 根据数组每项值, 生成以该值为 key 的键值对
 
 ```typescript
-mapToHash<T1, T2>(
-        keyExecutor: (value: T1, index: number, array: readonly T[], returnObj: T2) => string | number, valueExecutor?: (value: T1, index: number, array: readonly T[], returnObj: T2) => any
-    ): Object<T2>
+mapToHash<T1>(
+    keyExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => string | number,
+    valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any
+): object
+
+mapToHash<T1>(valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any): object
+
+mapToHash<T1 = (string | number)[]>(): { [k: string]: string | number }
 ```
 
 ```javascript
 // example 1
+// 数组的每一项是 number 或 string 时
+[1,2,3].mapToHash()
+// => {1:1, 2:2, 3:3}
+
+
+// example 2
 const output = ['info', 'warn', 'error', 'success'].mapToHash(v => msg => trace(`[${v.toUpperCase()}] ${msg}`))
 output.info('hello world, farewell.') // => [INFO] hello world, farewell.
 
-// example 2
+
+// example 3
 const { tom, jerry } = [
     { name: 'tom', color: 'blue' },
     { name: 'jerry', color: 'yellow' },
@@ -92,8 +107,21 @@ const { tom, jerry } = [
 tom.say('hello')    // => <span style='color:blue'>tom: hello</span>
 jerry.say('hello')  // => <span style='color:yello'>jerry: hello</span>
 
-// example 3
+
+// example 4
 ['a', 'b', 'c'].mapToHash(v => v) // => {a, b, c}
+
+
+// example 5
+// 特殊情况: 当转换后的key无法作为键时(即类型不是字符串或数字, 以及''), 该项将会被舍弃
+[1, null, 3].mapToHash(v=>v)
+// => {'1': 1, '3': 3}
+
+[{ name: 'tom', age: 6 }, { name: 'jerry', age: 8 }].mapToHash(
+    v => v.age > 6 && v.name,
+    v => v.age
+)
+// => { jerry: 8 }
 ```
 
 #### `toHash`
@@ -229,7 +257,48 @@ let matchResult = rules.match(v => word.match(v))
 matchResult && trace(matchResult[1]) // => tom
 ```
 
-#### filterBy
+#### `firstItem`
+
+取数组开头的 n 项 (1 ≤ n ≤ length, 默认 1)
+
+```typescript
+firstItem(n: number): T[]
+```
+
+```javascript
+;[1, 2, 3, 4].firstItem(2)
+// => [1,2]
+```
+
+#### `lastItem`
+
+取数组尾部的 n 项 (1 ≤ n ≤ length, 默认 1)
+
+```typescript
+lastItem(n: number): T[]
+```
+
+```javascript
+;[1, 2, 3, 4].lastItem(2)
+// => [3,4]
+```
+
+#### `last`
+
+数组最后一项, 即 arr[arr.length-1]
+
+```typescript
+last: T //(getter/setter)
+```
+
+```javascript
+;[1, 2, 3, 4].last
+// => 4
+;[1, 2, 3, 4].last++
+// 原数组=> [1,2,3,5]
+```
+
+#### `filterBy`
 
 增强的数组过滤器, 可过滤、筛选、匹配前后缀
 

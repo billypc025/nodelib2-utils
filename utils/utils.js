@@ -113,21 +113,21 @@ function trim(p_string) {
 }
 
 function parseUrl($url) {
-    var res = Object.create(null)
-    var url = $url.split('?')[0]
-    var protocol = url.split('://')[0]
-    protocol != '' && (protocol += '://')
-    var tempurl = url.substr(protocol.length)
-    var domain = tempurl.substring(0, tempurl.indexOf('/'))
-    var host = domain
-    var port = 80
+    let res = Object.create(null)
+    let url = $url.split('?')[0]
+    let protocol = url.split('://')[0]
+    var tempurl = url.substr(protocol == '' ? 0 : protocol.length + 3)
+    let tempurl = url.substr(protocolStr.length)
+    let domain = tempurl.substring(0, tempurl.indexOf('/'))
+    let host = domain
+    let port = 80
     if (domain.indexOf(':') > 0) {
         port = domain.substring(domain.indexOf(':') + 1) - 0
         domain = domain.substring(0, domain.indexOf(':'))
     }
     $url = $url.replace(url, '')
-    var query = Object.create(null)
-    var bookmark = ''
+    let query = Object.create(null)
+    let bookmark = ''
     $url = $url.trim().replace(/^(\?|#|&)/, '')
     if ($url.indexOf('#') > 0) {
         bookmark = $url.substr($url.indexOf('#') + 1)
@@ -136,9 +136,9 @@ function parseUrl($url) {
 
     if ($url) {
         $url.split('&').forEach(function (param) {
-            var parts = param.replace(/\+/g, ' ').split('=')
-            var key = decodeURIComponent(parts.shift())
-            var val = parts.length > 0 ? decodeURIComponent(parts.join('=')) : null
+            let parts = param.replace(/\+/g, ' ').split('=')
+            let key = decodeURIComponent(parts.shift())
+            let val = parts.length > 0 ? decodeURIComponent(parts.join('=')) : null
 
             if (query[key] === undefined) {
                 query[key] = val
@@ -155,6 +155,7 @@ function parseUrl($url) {
     res.query = query
     res.domain = domain
     res.port = port
+    res.protocol = protocol
     return res
 }
 
@@ -478,14 +479,25 @@ function __endTiming($trace = true) {
     return num
 }
 
-function __setTimeout($callback, $time) {
-    var time = $time || $callback
-    !isNum(time) && (time = 200)
-    var callback = typeof $callback == 'function' ? $callback : null
-    return __promise(r => {
-        setTimeout(async () => {
-            callback && (await callback())
-            r()
+// __setTimeout(time)
+// __setTimeout(time,cancelToken)
+// __setTimeout(callback, time)
+// __setTimeout(callback, time, cancelToken)
+// __setTimeout(callback, callbackArgs, time)
+// __setTimeout(callback, callbackArgs, time, cancelToken)
+function __setTimeout(callback, callbackArgs, time, cancelToken) {
+    return new Promise((resolved, reject) => {
+        typeof time != 'number' &&
+            (typeof callback == 'number'
+                ? ((time = callback), (cancelToken = callbackArgs), (callback = callbackArgs = null))
+                : ((cancelToken = time), (time = callbackArgs), (callbackArgs = null)))
+        cancelToken &&
+            cancelToken(() => {
+                clearTimeout(timeout)
+                reject('canceled')
+            })
+        let timeout = setTimeout(() => {
+            callback ? resolved(callback(...callbackArgs)) : resolved()
         }, time)
     })
 }
@@ -503,10 +515,14 @@ function __promise(executor, ...arg) {
         }
         return new Promise(executor)
     } else {
-        return new Promise(resolved => {
-            executor(...arg, (...arg) => {
-                resolved(...arg)
-            })
+        return new Promise((resolved, reject) => {
+            try {
+                executor(...arg, (...arg) => {
+                    resolved(...arg)
+                })
+            } catch (e) {
+                reject(e)
+            }
         })
     }
 }
@@ -546,20 +562,24 @@ function randomString(len = 1) {
     return Array.fromLength(len, v => CHAR_SEQUENCE[random(0, CHAR_SEQUENCE.length)]).join('')
 }
 
-function traceTable($list, { column, color = {}, isNode = global.isNode, indexStart = 0, showIndex = true } = {}) {
+function getBytesLen(str) {
+    return `${str ?? ''}`.split('').reduce((n, v) => n + (v.charCodeAt(0) < 11904 ? 1 : 2), 0)
+}
+
+function getTraceTable($list, { column, color = {}, isNode = global.isNode, indexStart = 0, showIndex = true } = {}) {
     let keysLabel = typeof column === 'object' && !Array.isArray(column) ? column : {}
-    let color_line = color.line || isNode ? s => `\x1b[38;5;241m${s}\x1b[39m` : s => s
-    let color_column = color.column || (s => `\x1b[1m\x1b[36m${s}\x1b[39m\x1b[22m`)
+    let color_line = color.line || (isNode ? s => `\x1b[38;5;241m${s}\x1b[39m` : s => s)
+    let color_column = color.column || (isNode ? s => `\x1b[1m\x1b[36m${s}\x1b[39m\x1b[22m` : s => s)
     let alginLeftKeys = []
     let columnHash = $list.reduce((o, v) => {
         let cols = Array.isArray(column) ? column : Object.keys(v)
         cols.forEach(k => {
             !alginLeftKeys.includes(k) && !isNum(v[k]) && alginLeftKeys.push(k)
-            o[k] = Math.max(o[k] || 0, getLen(keysLabel[k] || k), getLen(v[k]))
+            o[k] = Math.max(o[k] || 0, getBytesLen(keysLabel[k] || k), getBytesLen(v[k]))
         })
         return o
     }, {})
-    let indexLen = getLen($list.length - 1)
+    let indexLen = getBytesLen($list.length - 1)
     let indexLineStr = '─'.repeat(indexLen)
     let keys = Object.keys(columnHash)
     let lineStrList = keys.map(k => '─'.repeat(columnHash[k] + 2))
@@ -583,40 +603,58 @@ function traceTable($list, { column, color = {}, isNode = global.isNode, indexSt
     tableStr += `\n${lineStrBtm}`
     return tableStr
 
-    function getLen(str) {
-        return `${str ?? ''}`.split('').reduce((n, v) => {
-            var code = v.charCodeAt(0)
-            let len = code < 16 * 16 || code == 9723 || code == 9724 ? 1 : 2
-            return n + len
-        }, 0)
-    }
-
     function c(val, len) {
-        let valLen = getLen(val)
+        let valLen = getBytesLen(val)
         let start = parseInt((len - valLen) / 2)
         let end = len - valLen - start
         return `${' '.repeat(start)}${val}${' '.repeat(end)}`
     }
     function l(val, len) {
-        return ` ${val ?? ''}${' '.repeat(len - getLen(val) - 1)}`
+        return ` ${val ?? ''}${' '.repeat(len - getBytesLen(val) - 1)}`
     }
 
     function r(val, len) {
-        return `${' '.repeat(len - getLen(val) - 1)}${val ?? ''} `
+        return `${' '.repeat(len - getBytesLen(val) - 1)}${val ?? ''} `
     }
     function num(val, len) {
-        return `${' '.repeat(len - getLen(val))}${val ?? ''}`
+        return `${' '.repeat(len - getBytesLen(val))}${val ?? ''}`
     }
 }
-
-function padStart(val, maxLength, fillString) {
-    return `${val}`.padStart(maxLength, fillString)
+function traceTable($list, $options) {
+    console.log(getTraceTable($list, $options))
 }
-function padEnd(val, maxLength, fillString) {
-    return `${val}`.padEnd(maxLength, fillString)
+
+function padStart(val, maxLength, fill) {
+    return `${val}`.padStart(maxLength, `${fill}`)
+}
+function padEnd(val, maxLength, fill) {
+    return `${val}`.padEnd(maxLength, `${fill}`)
 }
 function repeat(val, count = 0) {
     return `${val}`.repeat(count)
+}
+function pick(targetObj, ...keys) {
+    if (typeof targetObj != 'object') {
+        return null
+    }
+    keys = keys.flat()
+    if (keys.length == 0) return {}
+    return keys.mapToHash(
+        v => {
+            if (typeof v == 'string') {
+                return v
+            } else if (typeof v == 'object') {
+                return Object.keys(v)[0]
+            }
+            return null
+        },
+        v => {
+            if (typeof v == 'object') {
+                return Object.values(v)[0]
+            }
+            return targetObj[v] ?? null
+        }
+    )
 }
 
 module.exports = {
@@ -653,7 +691,10 @@ module.exports = {
     __debounce,
     randomString,
     traceTable,
+    getTraceTable,
     padStart,
     padEnd,
     repeat,
+    pick,
+    getBytesLen,
 }

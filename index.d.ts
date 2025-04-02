@@ -30,8 +30,10 @@ interface time {
     /**
      * 根据日期或时间戳，获取日期数组 [YYYY,MM,DD,hh,mm,ss]
      * @param dateOrTime 传入Date或时间戳, 缺省为Date.now()
+     * @param doubleDigit 是否显示2位数字, 默认显示1位
      */
-    getFullDateArray(dateOrTime?: number | Date): number[]
+    getFullDateArray(dateOrTime?: number | Date, doubleDigit?: false): number[]
+    getFullDateArray(dateOrTime?: number | Date, doubleDigit: true): string[]
     /**
      * 根据日期或时间戳，获取时间字符串 (默认格式: hh:mm:ss)
      * @param dateOrTime 传入Date或时间戳, 缺省为Date.now()
@@ -217,6 +219,140 @@ declare global {
         (id: string): any
     }
 
+    interface Object {
+        /**
+         * return Object.keys(obj)
+         */
+        get __keys(): string[]
+        /**
+         * return Object.keys(obj)[0]
+         */
+        get __key0(): string
+        /**
+         * return Object.values(obj)
+         */
+        get __values(): any[]
+        /**
+         * return Object.values(obj)[0]
+         */
+        get __value0(): any
+        /**
+         * 遍历执行fn并返回自身
+         * @param fn 回调函数
+         */
+        __forEach(fn: (key: string, value: any, self: this) => void): ThisType
+        /**
+         * 异步执行遍历fn并返回自身
+         * @param fn 异步回调函数
+         */
+        __forEachAsync(fn: (key: string, value: any, self: this) => Promise<void>): Promise<ThisType>
+        /**
+         * 遍历回调每一项, 每一项的fn回调均返回true则最终返回true, 否则返回false
+         * @param fn 回调函数
+         */
+        __every(fn: (key: string, value: any, self: this) => Boolean): Boolean
+        /**
+         * 遍历回调每一项, 只要有一项的回调fn返回false则最终返回false, 否则返回true
+         * @param fn 回调函数
+         */
+        __some(fn: (key: string, value: any, self: this) => Boolean): Boolean
+        /**
+         * 遍历生成新的Object, 每一组键值对都可用相应的处理器进行转换处理
+         * @param keyExecutor 键处理器
+         * @param valueExecutor 值处理器
+         *
+         * @example
+         * let obj = { a: 1, b: 2 }
+         *
+         * obj.__map(v => v+1) // => {a:2, b:3}
+         * obj.__map((k, v) => v+1, v => v+1) // => {2:2, 3:3}
+         *
+         * // 如果k不是一个有效的String或Number, 在map过程中会丢弃该项
+         * let obj = { a: 1, b: 2, _c: 3 }
+         *
+         * obj.__map(
+         *     (k, v) => !k.startsWith('_') && k, // 丢弃下划线开头的项
+         *     (v, k) => v
+         * )
+         * // => { a: 1, b: 2}
+         *
+         * // 以下是一个很简单的示例, 使用__map创建 accessor descriptor 以实现一个 SafeData 生成器
+         * function createSafeData(initData) {
+         *     // 内部创建一个 safeData
+         *     let safeData = { ...initData }
+         *     return __def(
+         *         {},
+         *         {
+         *             // 遍历每一项, 生成与之对应的 accessor descriptor
+         *             ...safeData.__map((v, k) => __def_get('e', () => safeData[k])),
+         *
+         *             // 只能通过 update({...}) 更新内部数据
+         *             update(updateData) {
+         *                 safeData.__forEach(k => {
+         *                     k in updateData && (safeData[k] = updateData[k])
+         *                 })
+         *             },
+         *         }
+         *     )
+         * }
+         *
+         * let obj = createSafeData({ name: 'billypc', age: 40 })
+         * trace(obj.name, obj.age)
+         * obj.update({ name: 'billy' })
+         * trace(obj.name, obj.age)
+         */
+        __map(valueExecutor: (value: any, key: string, self: this) => any): object
+        __map(
+            keyExecutor: (key: string, value: any, self: this) => string | number,
+            valueExecutor: (value: any, key: string, self: this) => any
+        ): object
+        /**
+         * Object 转换为 Array,
+         * @param valueExecutor 每一项处理器, 返回最终数组项
+         *
+         * @example
+         * let obj = { a: 1, b: 2 }
+         *
+         * obj.__toArray((k, v) => `${k}:${v}`)
+         * // => [ 'a:1', 'b:2' ]
+         *
+         * obj.__toArray((k, v) => ({ name: k, age: v }))
+         * // => [ { name: 'a', age: 1 }, { name: 'b', age: 2 } ]
+         */
+        __toArray(valueExecutor: (key: string, value: any, self: this, arrayReturn: any[]) => any): any[]
+        /**
+         * 从目标对象中获取并新增属性
+         * @param obj
+         *
+         * @example
+         *
+         * let obj = { a: 1, b: 2 }
+         * obj.__add({ c: 3, d: 4 })
+         * // => { a: 1, b: 2, c: 3, d: 4 }
+         */
+        __add(obj: Record<string,any>): this
+        /**
+         * 根据fn回调的返回结果过滤并返回新的object
+         * @param fn
+         *
+         * @example
+         *
+         * let obj = { a:1, b:2, c:3, 1:1, 2:2, 3:3 }
+         * obj.__filter((k, v) => v >= 2)
+         * // => { '2':2, '3':3, b:2, c:3 }
+         *
+         * obj.__filter(k => isNum(k))
+         * // => { '1':1, '2':2, '3':3 }
+         *
+         * // 对于数组来说, 会转换为object
+         * let arr = ['tom', 'jerry', 'lucy', 'lily']
+         * arr.__filter(k => k >= 2)
+         * // => { '2':'lucy', '3':'lily' }
+         *
+         */
+        __filter(fn: (key: string, value: any, self: this) => Boolean): object
+    }
+
     interface Array<T> {
         /**
          * Convert Array to Object
@@ -238,7 +374,10 @@ declare global {
          * //   txt2: [ { id: 'b', content: 'txt2' } ]
          * // }
          */
-        toHash<T>(key?: string, valueGroup?: boolean, valKey?: string): { [key: string]: any }
+        toHash<T1 = keyof T>(key?: T1, valueGroup?: false): { [k: string | number]: T }
+        toHash<T1 = keyof T>(key: T1, valueGroup: true): { [k: string | number]: T[] }
+        toHash<T1 = keyof T, T2 = keyof T>(key: T1, valueGroup: false, valKey: T2): { [k: string | number]: any }
+        toHash<T1 = keyof T, T2 = keyof T>(key: T1, valueGroup: true, valKey: T2): { [k: string | number]: any[] }
         /**
          * 数组根据指标标识,计算数量
          * @param key - 要统计的key
@@ -287,45 +426,46 @@ declare global {
          * @param ...arg - 待操作对象
          * @returns 返回原数组对象，可继续编写链式调用
          */
-        add<t>(...arg: any[]): T[]
+        add(...arg: T[]): T[]
         /**
          * 调用unshift后返回原数组对象，主要用于链式语法
          * @param ...arg - 待操作对象
          * @returns 返回原数组对象，可继续编写链式调用
          */
-        addFirst<T>(...arg: any[]): T[]
+        addFirst(...arg: T[]): T[]
         /**
          * 调用splice后返回原数组对象，主要用于链式语法
          * @param startIndex - 开始索引
          * @param deleteLength - 删除长度
          * @returns 返回原数组对象，可继续编写链式调用
          */
-        remove<T>(startIndex: number, deleteLength: number): T[]
+        remove(startIndex: number, deleteLength: number): T[]
         /**
          * 删除指定的item，并返回原数组对象
          * @param item 要删除的item (若数组内未找到item,不做任何处理)
          * @returns 返回原数组对象，可继续编写链式调用
          */
-        removeItem<T>(item: T): T[]
+        removeItem(item: T): T[]
         /**
          * 调用splice从末尾开始删除后返回原数组对象，主要用于链式语法
          * @param deleteLength - 从末尾开始删除的长度
          * @returns 返回原数组对象，可继续编写链式调用
          */
-        removeLast<T>(deleteLength: number): T[]
+        removeLast(deleteLength: number): T[]
         /**
          * 调用splice从开头开始删除后返回原数组对象，主要用于链式语法
          * @param deleteLength - 从头开始删除的长度
          * @returns 返回原数组对象，可继续编写链式调用
          */
-        removeFirst<T>(deleteLength: number): T[]
+        removeFirst(deleteLength: number): T[]
         /**
          * 调用forEach后返回原数组对象，主要用于链式语法
          * @param callbackfn - callback function
          * @param thisArg - this
          * @returns 返回原数组对象，可继续编写链式调用
          */
-        forEachReturn<T>(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): T[]
+        forEachReturn(callbackfn: (value: T, index: number, array: readonly T[]) => void): T[]
+        forEachAsync(callbackfn: (value: T, index: number, array: readonly T[]) => Promise<void>): Promise<T[]>
         /**
          * 根据传入的规则方法进行匹配，并返回第一个匹配项的计算结果
          * @param callbackfn
@@ -340,12 +480,31 @@ declare global {
          * // => tom
          * 一般用于批量正则匹配拿到结果
          */
-        match<T>(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): any
+        match(callbackfn: (value: T, index: number, array: readonly T[]) => void): any
         /**
          * 根据数组每项值, 生成以该值为key的键值对
+         *
+         * <Feature>
+         * - Array 转换 Object
+         * - 可自定义Key
+         * - 可自定义Value
+         * </Feature>
+         *
          * @param keyExecutor 生成key的回调方法
-         * @param valueExecutor 生成与key对应的value的回调方法, 缺省时不改变数组每项的值
+         * @param valueExecutor 生成与key对应的value的回调方法
          * @return 新的键值对
+         *
+         * @example
+         *
+         * // 数组的每一项是 number 或 string 时
+         * [1,2,3].mapToHash()
+         * // => {1:1, 2:2, 3:3}
+         *
+         * @example
+         *
+         * const output = ['info', 'warn', 'error', 'success'].mapToHash(v => msg => trace(`[${v.toUpperCase()}] ${msg}`))
+         * output.info('hello world, farewell.')
+         * // => [INFO] hello world, farewell.
          *
          * @example
          *
@@ -364,22 +523,32 @@ declare global {
          *     { name: 'tom', color: 'blue' },
          *     { name: 'jerry', color: 'yellow' },
          * ].mapToHash(
-         *     v => v.name
+         *     v => v.name,
          *     v => __def(v, { say: msg => trace(`<span style='color:${v.color}'>${v.name}: ${msg}</span>`) }),
          * )
          *
          * tom.say('hello')    // => <span style='color:blue'>tom: hello</span>
          * jerry.say('hello')  // => <span style='color:yello'>jerry: hello</span>
          *
+         * @example
          *
-         * // valueExecutor缺省时
+         * // 特殊情况: 当转换后的key无法作为键时(即类型不是字符串或数字, 以及''), 该项将会被舍弃
+         * [1, null, 3].mapToHash(v=>v)
+         * // => {'1': 1, '3': 3}
          *
-         * ['a', 'b', 'c'].mapToHash(v => v) // => {a, b, c}
+         * [{ name: 'tom', age: 6 }, { name: 'jerry', age: 8 }].mapToHash(
+         *     v => v.age > 6 && v.name,
+         *     v => v.age
+         * )
+         * // => { jerry: 8 }
+         *
          */
-        mapToHash<T1, T2>(
-            keyExecutor: (value: T1, index: number, array: readonly T[], returnObj: T2) => string | number,
-            valueExecutor?: (value: T1, index: number, array: readonly T[], returnObj: T2) => any
-        ): Object<T2>
+        mapToHash<T1>(
+            keyExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => string | number,
+            valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any
+        ): object
+        mapToHash<T1>(valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any): object
+        mapToHash(): { [k: string]: string | number }
         /**
          * 字符排序 (字符逐位比较, 有3种排序方式供选择)
          * @param executor 排序回调 sortCore:排序处理器, val1, val2: 为待比较项
@@ -406,10 +575,7 @@ declare global {
          * [{k:'home'}, {k:'hat'}, {k:'hot'}, { k: 'how' }].charSort((f, a, b) => f(a.k, b.k), 1)
          * // => [ { k: 'hat' }, { k: 'home' }, { k: 'hot' }, { k: 'how' } ]
          */
-        charSort<T>(
-            executor?: (sortCore: (val1: T, val2: T) => number, val1: T, val2: T) => void,
-            rule?: 0 | 1 | 2
-        ): T[]
+        charSort(executor?: (sortCore: (val1: T, val2: T) => number, val1: T, val2: T) => void, rule?: 0 | 1 | 2): T[]
         /**
          * 字符排序 (字符逐位比较, 有3种排序方式供选择)
          * @param rule 排序规则(默认0) 0:第一排序字符串长度升序, 第二排序unicode字节码升序  1:第一排序unicode字节码升序, 第二排序字符串长度升序  2:数字优先 + 字符unicode升序 + 长度升序
@@ -419,7 +585,7 @@ declare global {
          * ['home', 'hat', 'hot', 'how'].charSort(1) // 先按字符排序, 再按长度排序
          * // => [ 'hat', 'home', 'hot', 'how' ]
          */
-        charSort<T>(rule: 0 | 1 | 2): T[]
+        charSort(rule: 0 | 1 | 2): T[]
         /**
          * 增强的数组过滤器
          * @param filtValue 过滤条件 (过滤条件是function时, 等同于Array.prototype.filter)
@@ -467,7 +633,7 @@ declare global {
          * ['a_001','b_102','c_903'].filterBy(/_[1-9]{1}\d{2}/)
          * // => ['b_102','c_903']
          */
-        filterBy<T>(
+        filterBy(
             filtValue: (val: T, index: number, array: T[]) => boolean | any[] | string | boolean | RegExp,
             option?:
                 | true
@@ -476,13 +642,82 @@ declare global {
                 | 'suffix'
                 | { key?: string | ((val: T) => any); contain?: true | false; fix?: 'prefix' | 'suffix' }
         ): T[]
+        /**
+         * 取数组开头的n项 (1 ≤ n ≤ length, 默认1)
+         * @param n
+         *
+         * [1,2,3,4].firstItem(2)
+         * // => [1,2]
+         *
+         */
+        firstItem(n: number): T[]
+        /**
+         * 取数组尾部的n项 (1 ≤ n ≤ length, 默认1)
+         * @param n
+         *
+         * [1,2,3,4].lastItem(2)
+         * // => [3,4]
+         *
+         */
+        lastItem(n: number): T[]
+        /**
+         * 数组最后一项, 即 arr[arr.length-1]
+         *
+         * @example
+         *
+         * ;[1, 2, 3, 4].last
+         * // => 4
+         *
+         * ;[1, 2, 3, 4].last++
+         * // 原数组=> [1,2,3,5]
+         */
+        last: T
+        /**
+         * 替换数组项, 并返回原数组
+         * @param fn
+         *
+         * @example
+         *
+         * // 源数组每项 +1
+         * [1, 2, 3, 4, 5, 6].replace(v => v + 1)
+         * // => [ 2, 3, 4, 5, 6, 7 ]
+         *
+         * // 删除源数组中的奇数
+         * Array.fromLength(8, v => v + 1).replace((v, i, a, del) => (v % 2 == 0 ? v : del()))
+         * // => [ 2, 4, 6, 8 ]
+         *
+         * // 删除源数组中的奇数, 剩余每一项转换为2的幂次方
+         * Array.fromLength(8, v => v + 1).replace((v, i, a, del) => (v % 2 == 0 ? Math.pow(2, v) : del()))
+         * // => [ 4, 16, 64, 256 ]
+         */
+        replace(fn: (item: T, index: number, array: this, delFn: () => undefined) => T | undefined): T[]
+        /**
+         * 从数组最后一项开始查找符合条件的项, 并返回该项
+         * @param fn
+         *
+         * @example
+         *
+         * [{name:'tom', age:10}, {name:'jerry', age:10}].find(v=>v.age==10)
+         * // => {name:'jerry', age:10}
+         */
+        findLast(fn: (item: T, index: number, array: this) => boolean): T
+        /**
+         * 从数组最后一项开始查找符合条件项, 并返回其索引
+         * @param fn
+         *
+         * @example
+         *
+         * ['b', 'c', 'a', 'd', 'c'].findLastIndex(v => v=='c')
+         * // => 4
+         */
+        findLastIndex(fn: (item: T, index: number, array: this) => boolean): number
     }
 
     interface ArrayConstructor {
         /**
          * 初始化并生成一个指定长度的Array，每项值为0
          * @param len - 新数组的length
-         * @param mapFn - map方法, 用于初始化新数组的每一项, 传入index
+         * @param mapFn - map方法, 用于初始化新数组的每一项, 传入index, 或用初始值填充每一项
          * @returns 每项值为index的新数组
          *
          * ps: 单纯生成指定长度的数组 Array.fromLength(length) 比 Array.from({length}) 速度快一倍以上
@@ -492,13 +727,19 @@ declare global {
          * // Each item is 0
          * Array.fromLength(5) // => [0, 0, 0, 0, 0]
          *
+         * // Each item is default value
+         * Array.fromLength(5, '') // => ['', '', '', '', '']
+         *
          * // Each item is index
          * Array.fromLength(5, v => v) // => [0, 1, 2, 3, 4]
          *
          * // use mapFn
          * Array.fromLength(5, v => String.fromCharCode(v + 65)) // => [ 'A', 'B', 'C', 'D', 'E' ]
          */
-        fromLength<T>(len: number, mapFn?: (index: number, array: T<any>[]) => any): T<any>[]
+        fromLength<T>(
+            len: number,
+            mapFn?: ((index: number, array: T<any>[]) => any) | string | object | any[] | number | boolean | symbol
+        ): T<any>[]
         /** [].charSort方法排序规则: 长度升序 + 字符unicode升序 */
         SORT_length_char: 0
         /** [].charSort方法排序规则: 字符unicode升序 + 长度升序 */
@@ -515,10 +756,11 @@ declare global {
          * @returns 入参键值对
          *
          * @example
-         * hello函数有3个定义:
+         *
+         * 定义hello函数实现重载的效果, 满足3种入参方式:
          * function hello(name: string, age?: number|string, someSpeak?: string): void
-         * function hello(name: string, someSpeak: string): void
-         * function hello(obj: { name: string; age?: number|string; someSpeak?: string }): void
+         * function hello(name: string, someSpeak: string,age?: number): void
+         * function hello(obj: { name: string; age?: number; someSpeak?: string }): void
          *
          * hello函数实现如下:
          * const hello = (...arg) => {
@@ -528,8 +770,8 @@ declare global {
          *        someSpeak = '',
          *   } = Function.getParamsWith(
          *       [
-         *           'name:string, age?:number|string, someSpeak?:string',
-         *           'name:string, someSpeak:string',
+         *           'name:string, age?:number, someSpeak?:string'
+         *           'name:string, someSpeak:string, age?:number',
          *           'object'
          *       ],
          *       arg
@@ -537,16 +779,22 @@ declare global {
          *   console.log(`hello ${name}.${age > 0 ? ` I am ${age} years old.` : ''}${someSpeak ? ` ${someSpeak}` : ''}`)
          * }
          *
-         * hello('billy', 40)
+         * hello('billy', 40, 'farewell!')
+         * // => 'hello billy. I am 40 years old. farewell!'
+         *
+         * hello('billy', 'farewell!', 40)
+         * // => 'hello billy. I am 40 years old. farewell!'
+         *
+         * hello('billy', 40, 'farewell!')
          * // => hello billy. I am 40 years old.
          *
          * hello('billy', 'farewell!')
          * // => hello billy. farewell!
          *
-         * hello({ name: 'billy', age: 30 })
+         * hello({ name: 'billy', age: 40 })
          * // => hello billy. I am 40 years old.
          *
-         * 注1: 目前支持基础类型如 string, number, boolean, object, function, string[], number[], object[]等, 语法可参照函数参数的ts类型声明
+         * 注1: 目前支持基础类型如 string, number, boolean, object, function, string[], number[], object[], {[k]:<type>}等, 语法可参照函数参数的ts类型声明
          * 注2: 如果入参是一个包含所有字段的Obj, 定义应直接为'object' (见示例参数规则列表的最后一项)
          * 注3: 须注意['a:string, b?:string', 'b:string']和['a:string, b:string', 'b:string']是不一样的两个匹配规则
          *      前者可以简写为['a:string, b?:string'], 或者直接将入参写在函数定义内, 而后者不行
@@ -576,20 +824,55 @@ declare global {
          *     _intervalCache[name].push(setInterval(executor, time * 1000, ...params))
          * }
          *
-         * // 调用示例:
-         * createInterval('task:autoSave', autoSave, param1, param2)
-         * createInterval('task:notice', fetch, 7200, url, init)
+         * function autoSave(file_path) {
+         *     // 每隔60秒执行一次自动保存文件
+         *     trace('autoSave', file_path)
+         * }
+         * function fetch(url, default_value) {
+         *     // 每隔7200秒执行一次fetch url
+         *     trace('fetch', url, default_value)
+         * }
+         * const socket = {
+         *     sendHeartbeat() {
+         *         // 每隔90秒执行一次发送心跳
+         *         trace('socket.sendHeartbeat')
+         *     },
+         * }
+         *
+         * createInterval('task:autoSave', autoSave, 60, 'file_path')
+         * createInterval('task:notice', fetch, 7200, 'web_url', 'default_value')
          * createInterval('heartbeat', socket.sendHeartbeat, 90)
          *
          *
          * @example
          * function foo(){
-         *    let {a='a', b} = Function.getParamsWith(['a:string, b:string', 'b:string'], arguments)
+         *    let {a='a', b} = Function.getParamsWith(
+         *         [
+         *            'a:string, b:string',
+         *            'b:string'
+         *         ],
+         *         arguments
+         *    )
          *    trace(a + b)
          * }
-         * foo()        // 缺失了必要参数，会抛出Error
+         * foo()        // 缺失了必要参数, throw Error
          * foo('A','B') // => AB   (匹配到第1条规则)
          * foo('B') // => aB   (必要参数只有1个，匹配到第2条规则)
+         *
+         * @example
+         * // 类型为{[key:string]:<type>}
+         * function test(...arg) {
+         *     let { a, b } = Function.getParamsWith(
+         *         [
+         *            'a:{[k]:string[]}, b:{add:string}',
+         *            'b:{add:string}, a:{[k]:string[]}',
+         *         ], arg
+         *     )
+         *     trace({ a, b })
+         * }
+         *
+         * test({ add: [] }, { add: '' })  // => { a: { add: [] }, b: { add: '' } }
+         * test({ add: '' }, { add: [] })  // => { a: { add: [] }, b: { add: '' } }
          */
         getParamsWith(paramDefRules: string[], args: any[]): { [k: string]: any }
     }
@@ -758,23 +1041,23 @@ declare global {
         setRange(range: [number, number]): number
         setRange(range0: number, range1: number): number
         /**
-         * 判断数字是否在限制范围内
+         * 判断数字是否在限制范围内 (包含边界)
          * @param range 目标范围
          * @returns
          *
          * @example
          *
          * const num=80
-         * // 下限 < num < 上限
+         * // 下限 ≤ num ≤ 上限
          * num.inRange([0,100])  // => true
          * num.inRange([0,10])  // => false
          * num.inRange([90,100])  // => false
          *
-         * // 下限 < num
+         * // 下限 ≤ num
          * num.inRange([0])  // => true
          * num.inRange([90])  // => false
          *
-         * // num < 上限
+         * // num ≤ 上限
          * num.inRange([,0])  // => false
          * num.inRange([,90])  // => true
          */
@@ -915,10 +1198,8 @@ declare global {
      *
      * @example
      * let obj = __def({}, 'e', {
-     *   name: {
-     *    get: () => {return ''},
-     *    set: v => {},
-     *   }})
+     *   name: {...}
+     * })
      *
      * let obj1 = __def({}, 'ew', {name: 'billy'})
      *
@@ -957,6 +1238,8 @@ declare global {
      * const module = __def_bind({}, { x: 42, getX: () => this.x })
      * const boundGetX = module.getX;
      * console.log(boundGetX()); // => 42
+     *
+     * // ！！！注意到了吗？ getX:()=>this.x 使用了箭头语法, 但并不能改变this指向
      *
      * 使用defineProperty可以通过属性描述操作符对子属性进行自定义, 另外__def_bind支持了方法到对象的自动绑定(这个绑定只针对子属性是Function,并且需要调用this)
      * 适用场景: 可用于内置的底层方法,用__def_bind控制属性的可操作性及是否可枚举, 可以达到关键对象防篡改的目的。还可用于某个对象的方法在长调用链中进行传递时保持this指向正确.
@@ -1123,7 +1406,7 @@ declare global {
     /**
      * 解析URL字符串
      * @param url - url字符串
-     * @returns {url, host, bookmark, query, domain, port}
+     * @returns {url, host, bookmark, query, domain, port, protocol}
      */
     function parseUrl(url: string): {
         url: string
@@ -1132,6 +1415,7 @@ declare global {
         query: { [k: string]: any }
         domain: string
         port: number
+        protocol: string
     }
     /**
      * 深度复制合并两个obj（将第2个obj深度复制合并到第1个obj, 会修改第1个obj）
@@ -1185,18 +1469,18 @@ declare global {
      * @return {string}
      *
      * @example
-     * getType({}) => Object
-     * getType([]) => Array
-     * getType(new Event('change'))  => Event
+     * getType({}) // => 'Object'
+     * getType([]) // => 'Array'
+     * getType(new Event('change')) // => 'Event'
      *
      * 自定义对象:
      * getType({ get [Symbol.toStringTag]() { return 'STH' }})
-     * // => STH
+     * // => 'STH'
      *
      * 自定义类:
      * class STH { get [Symbol.toStringTag]() { return 'STH' }}
      * getType(new STH())
-     * // => STH
+     * // => 'STH'
      *
      */
     function getType(obj: any): string
@@ -1324,11 +1608,38 @@ declare global {
     function __override(to: object, from: object): object
     /**
      * 异步延迟
+     * @param callback 延迟结束后的回调
+     * @param callbackArgs 回调参数
      * @param delay 延迟时长(单位ms)
+     * @param cancelToken 取消函数(同步执行)
      * @returns {Promise}
+     *
+     * @example
+     *
+     * // 通常用于aync function内
+     *
+     * async function func() {
+     *     await __setTimeout(2000) // sleep 2s
+     *     await __setTimeout(2000, (cancel)=>cancel()) // sleep 2s, 并立即取消 (同步执行)
+     *     let result= await __setTimeout(()=>{return Date.now()}, 2000) // result为2s后的系统时间戳
+     * }
+     *
+     * // __setTimeout(time)
+     * // __setTimeout(time,cancelToken)
+     * // __setTimeout(callback, time)
+     * // __setTimeout(callback, time, cancelToken)
+     * // __setTimeout(callback, callbackArgs, time)
+     * // __setTimeout(callback, callbackArgs, time, cancelToken)
+     *
      */
-    function __setTimeout(delay: number): Promise<void>
-    function __setTimeout(callback: asyncFunction, delay: number): Promise<void>
+    function __setTimeout(delay: number, cancelToken?: (cancelFn: Function) => void): Promise<void>
+    function __setTimeout(callback: Function, delay: number, cancelToken?: (cancelFn: Function) => void): Promise<void>
+    function __setTimeout(
+        callback: Function,
+        callbackArgs: any[],
+        delay: number,
+        cancelToken?: (cancelFn: Function) => void
+    ): Promise<void>
     /**
      * 开始计时, 和__endTiming配合使用
      */
@@ -1395,6 +1706,24 @@ declare global {
      * @example
      * trace(traceTable([{name:'tom',age:10}, {name:'jerry',age:9}], {column:{name:'名称',age:'年龄'}, indexStart:1}))
      */
+    function getTraceTable(
+        array: any[],
+        options: {
+            colums: string[] | { [k: string]: string }
+            color: { line: (s: string) => string; column: (s: string) => string }
+            isNode: boolean
+            indexStart: number
+            showIndex: boolean
+        }
+    ): string
+    /**
+     * 获取list的二维表格形式字符串
+     * @param array
+     * @param options
+     *
+     * @example
+     * traceTable([{name:'tom',age:10}, {name:'jerry',age:9}], {column:{name:'名称',age:'年龄'}, indexStart:1})
+     */
     function traceTable(
         array: any[],
         options: {
@@ -1404,27 +1733,72 @@ declare global {
             indexStart: number
             showIndex: boolean
         }
-    )
+    ): void
     /**
      * 用给定的字符串填充当前字符串（可能重复），使生成的字符串达到给定的长度。填充是从当前字符串的开头（左）开始应用的。
-     * @param value 原始值 (非字符串值，将会转换为字符串)
+     * @param value 原始值 (非字符串值自动转换)
      * @param maxLength 填充当前字符串后得到的字符串的长度。如果此参数小于当前字符串的长度，则当前字符串将按原样返回。
-     * @param fillString 用于填充当前字符串的字符串。如果此字符串太长，它将被截断，并应用最左边的部分。此参数的默认值为“ ”（U+0020）
+     * @param fill 填充值(非字符串值自动转换)。如果此字符串太长，它将被截断，并应用最左边的部分。此参数的默认值为“ ”（U+0020）
+     *
+     * @example
+     *
+     * [9, 10, 11].map(v => padStart(v, 3, 0))
+     * // => [ '009', '010', '011' ]
      */
-    function padStart(value: any, maxLength: number, fillString?: string | undefined): string
+    function padStart(value: any, maxLength: number, fill?: any): string
     /**
      * 用给定的字符串填充当前字符串（可能重复），使生成的字符串达到给定的长度。填充是从当前字符串的末尾（右）开始应用的。
-     * @param value 原始值 (非字符串值，将会转换为字符串)
+     * @param value 原始值 (非字符串值自动转换)
      * @param maxLength 填充当前字符串后得到的字符串的长度。如果此参数小于当前字符串的长度，则当前字符串将按原样返回。
-     * @param fillString 用于填充当前字符串的字符串。如果此字符串太长，它将被截断，并应用最左边的部分。此参数的默认值为“ ”（U+0020）。
+     * @param fill 填充值(非字符串值自动转换)。如果此字符串太长，它将被截断，并应用最左边的部分。此参数的默认值为“ ”（U+0020）。
      */
-    function padEnd(value: any, maxLength: number, fillString?: string | undefined): string
+    function padEnd(value: any, maxLength: number, fill?: any): string
     /**
      * 返回一个字符串值，该值由附加在一起的计数副本组成。如果count为0，则返回空字符串。
-     * @param value 原始值 (非字符串值，将会转换为字符串)
+     * @param value 原始值 (非字符串值自动转换)
      * @param count 重复次数 (默认0次)
      */
     function repeat(value: any, count: number): string
+    /**
+     * 从目标对象中 pick 指定的属性, 生成新的Object
+     * @param keys
+     *
+     * @example
+     *
+     * let obj = { a: 1, b: 2, c: 3, d: 4 }
+     * pick(obj, 'a', 'c') // => {a:1, c:3}
+     * pick(obj, ['a', 'c']) // => {a:1, c:3}
+     *
+     */
+    function pick(obj: object, ...keys: string[]): object
+    /**
+     * 计算目标字符串的字节长度 (部分中文及全角符号计作2)
+    部分 *
+     *部分 * 英文字符都是1个字节
+     *部分 * utf-8编码的中文一般占用3个字节,也有4个字节的, 但是这里统统记作 2
+     *部分 * GBK编码的中文字符一般占用2个字节
+     * @param str
+     *
+     * @example
+     *
+     * getBytesLen('hello')
+     * // => 5
+     *
+     * getBytesLen('，|')
+     * // => 4
+     *
+     * getBytesLen(123)
+     * // => 3
+     *
+     * ;['123456','“2345”', '1你好6', '12，56'].forEach(v => trace(v + '|', getBytesLen(v)))
+     *
+     * // 123456| 6
+     * // “2345”| 6
+     * // 1你好6| 6
+     * // 12，56| 6
+     *
+     */
+    function getBytesLen(str: any): number
 }
 
 export const g: Global
