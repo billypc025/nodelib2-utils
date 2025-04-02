@@ -16,7 +16,7 @@ global.trace = console.log
 
 module.exports = __setup({
     g: __export({
-        time: './utils/time',
+        time: require('./utils/time'),
     }),
     __setup,
 })

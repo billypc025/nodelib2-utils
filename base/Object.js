@@ -1,4 +1,4 @@
-const { __setup } = require('./utils_global')
+const { __setup } = require('../utils/setup')
 
 function isKey(k) {
     return (typeof k == 'string' && k.length > 0) || typeof k == 'number'

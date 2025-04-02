@@ -53,6 +53,8 @@ $global.__sleep = (millisecond = 0) => {
     white(Date.now() - startTime < millisecond)
 }
 
+function __path(v) {}
+
 module.exports = {
     __setup(requireModule, scope, ...arg) {
         scope = scope || $global
@@ -67,16 +69,11 @@ module.exports = {
             scope,
             requireModule.__map(v => (dk == 'gs' ? { ...v } : { [dk]: v }))
         )
-        // }
     },
     __export(modules) {
         return __def(
             {},
-            modules.__map(v =>
-                typeof v == 'string'
-                    ? ((v = /^(\.|\/)/.test(v) ? __libPath(v) : v) && !1) || __def_get('e', () => require(v))
-                    : __def_get('e', v)
-            )
+            modules.__map(v => __def_get('e', () => v))
         )
     },
 }

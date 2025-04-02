@@ -113,21 +113,20 @@ function trim(p_string) {
 }
 
 function parseUrl($url) {
-    let res = Object.create(null)
-    let url = $url.split('?')[0]
-    let protocol = url.split('://')[0]
+    var res = Object.create(null)
+    var url = $url.split('?')[0]
+    var protocol = url.split('://')[0]
     var tempurl = url.substr(protocol == '' ? 0 : protocol.length + 3)
-    let tempurl = url.substr(protocolStr.length)
-    let domain = tempurl.substring(0, tempurl.indexOf('/'))
-    let host = domain
-    let port = 80
+    var domain = tempurl.substring(0, tempurl.indexOf('/'))
+    var host = domain
+    var port = 80
     if (domain.indexOf(':') > 0) {
         port = domain.substring(domain.indexOf(':') + 1) - 0
         domain = domain.substring(0, domain.indexOf(':'))
     }
     $url = $url.replace(url, '')
-    let query = Object.create(null)
-    let bookmark = ''
+    var query = Object.create(null)
+    var bookmark = ''
     $url = $url.trim().replace(/^(\?|#|&)/, '')
     if ($url.indexOf('#') > 0) {
         bookmark = $url.substr($url.indexOf('#') + 1)
@@ -136,9 +135,9 @@ function parseUrl($url) {
 
     if ($url) {
         $url.split('&').forEach(function (param) {
-            let parts = param.replace(/\+/g, ' ').split('=')
-            let key = decodeURIComponent(parts.shift())
-            let val = parts.length > 0 ? decodeURIComponent(parts.join('=')) : null
+            var parts = param.replace(/\+/g, ' ').split('=')
+            var key = decodeURIComponent(parts.shift())
+            var val = parts.length > 0 ? decodeURIComponent(parts.join('=')) : null
 
             if (query[key] === undefined) {
                 query[key] = val
@@ -158,27 +157,6 @@ function parseUrl($url) {
     res.protocol = protocol
     return res
 }
-
-// function __extends(d, b)
-// {
-// 	for (var p in b)
-// 	{
-// 		if (b.hasOwnProperty(p))
-// 		{
-// 			d[p] = b[p];
-// 		}
-// 	}
-// 	function __()
-// 	{
-// 		this.constructor = d;
-// 	}
-//
-// 	__.prototype = b.prototype;
-// 	d.prototype = new __();
-// 	d.prototype.constructor = d;
-// 	return d.prototype;
-// };
-// $global.__extends = __extends;
 
 /**
  * 合并两个对象（将第二个对象合并到第一个对象），也可用于深度复制

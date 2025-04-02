@@ -2,7 +2,7 @@
  * Created by billy on 2020/11/11.
  */
 
-const { __setup } = require('./utils_global')
+const { __setup } = require('../utils/setup')
 
 Array.fromLength = (len, mapFn) =>
     mapFn
