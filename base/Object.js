@@ -27,7 +27,7 @@ __setup(
                 ? { ...this }
                 : (!!f2 && ([f2, f1] = [f1, f2]),
                   Object.keys(this).reduce(
-                      (o, k) => (f2 && (k = f2(k, this[k], o)), isKey(k) && (o[k] = f1(this[k], k, o)), o),
+                      (o, k) => ((ok = k), f2 && (k = f2(k, this[k], o)), isKey(k) && (o[k] = f1(this[ok], ok, o)), o),
                       {}
                   ))
         },
