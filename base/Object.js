@@ -23,6 +23,7 @@ __setup(
             return Object.keys(this).some(k => fn(k, this[k], this))
         },
         __map(f1, f2 = null) {
+            let ok
             return !f1 && !f2
                 ? { ...this }
                 : (!!f2 && ([f2, f1] = [f1, f2]),

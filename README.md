@@ -28,6 +28,19 @@ npm i --save nodelib2-utils
 
 ## Usage
 
+```html
+<!-- html -->
+<script src="https://unpkg.com/nodelib2-utils/dist/umd/nodelib2-utils.js"></script>
+```
+
+```javascript
+// ESM
+import 'nodelib2-utils'
+
+// commonjs
+require('nodelib2-utils')
+```
+
 ### `Function.getParamsWith` 实现重构
 
 ```javascript
