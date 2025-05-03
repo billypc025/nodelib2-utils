@@ -28,7 +28,7 @@ __setup(
         forEachReturn,
         forEachAsync,
         match,
-        mapToHash,
+        mapToObject,
         charSort,
         filterBy,
         firstItem,
@@ -223,7 +223,7 @@ function match(f) {
     return result
 }
 
-function mapToHash(f1, f2 = null) {
+function mapToObject(f1, f2 = null) {
     return this.length == 0
         ? {}
         : (!!f2 && ([f2, f1] = [f1, f2]),

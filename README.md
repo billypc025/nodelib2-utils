@@ -145,13 +145,13 @@ Array.fromLength(5, v => v) // => [0, 1, 2, 3, 4]
 Array.fromLength(5, v => String.fromCharCode(v + 65)) // => [ 'A', 'B', 'C', 'D', 'E' ]
 ```
 
-### `Array.prototype.mapToHash` 将 Array 转换为 key-valye object
+### `Array.prototype.mapToObject` 将 Array 转换为 key-valye object
 
 ```javascript
 require('nodelib2-utils')
 
 const logTypeList = ['info', 'warn', 'error', 'success']
-const output = logTypeList.mapToHash(v => msg => trace(`[${v.toUpperCase()}] ${msg}`))
+const output = logTypeList.mapToObject(v => msg => trace(`[${v.toUpperCase()}] ${msg}`))
 
 output.info('hello world, farewell.')
 // => [INFO] hello world, farewell.
@@ -271,7 +271,7 @@ trace(calendar)
 > 例子中使用到了如下方法：
 >
 > -   `Array.fromLength` _生成指定项及内容的数组_
-> -   `mapToHash` _将数组转换为 键值对_
+> -   `mapToObject` _将数组转换为 键值对_
 > -   全局方法：`random` _根据规则获取随机数_
 
 ```javascript
@@ -298,7 +298,7 @@ const RULES = {
 }
 
 function mockObject(config) {
-    return Object.keys(config).mapToHash(
+    return Object.keys(config).mapToObject(
         k => k.split('|')[0],
         k => {
             let val = config[k]

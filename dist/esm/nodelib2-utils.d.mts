@@ -497,12 +497,12 @@ declare global {
          * @example
          *
          * // 数组的每一项是 number 或 string 时
-         * [1,2,3].mapToHash()
+         * [1,2,3].mapToObject()
          * // => {1:1, 2:2, 3:3}
          *
          * @example
          *
-         * const output = ['info', 'warn', 'error', 'success'].mapToHash(v => msg => trace(`[${v.toUpperCase()}] ${msg}`))
+         * const output = ['info', 'warn', 'error', 'success'].mapToObject(v => msg => trace(`[${v.toUpperCase()}] ${msg}`))
          * output.info('hello world, farewell.')
          * // => [INFO] hello world, farewell.
          *
@@ -513,7 +513,7 @@ declare global {
          *     'warn',
          *     'error',
          *     'success'
-         * ].mapToHash(
+         * ].mapToObject(
          *     v => msg => trace(`[${v.toUpperCase()}] ${msg}`)
          * )
          * output.info('hello world, farewell.') // => [INFO] hello world, farewell.
@@ -522,7 +522,7 @@ declare global {
          * const { tom, jerry } = [
          *     { name: 'tom', color: 'blue' },
          *     { name: 'jerry', color: 'yellow' },
-         * ].mapToHash(
+         * ].mapToObject(
          *     v => v.name,
          *     v => __def(v, { say: msg => trace(`<span style='color:${v.color}'>${v.name}: ${msg}</span>`) }),
          * )
@@ -533,22 +533,22 @@ declare global {
          * @example
          *
          * // 特殊情况: 当转换后的key无法作为键时(即类型不是字符串或数字, 以及''), 该项将会被舍弃
-         * [1, null, 3].mapToHash(v=>v)
+         * [1, null, 3].mapToObject(v=>v)
          * // => {'1': 1, '3': 3}
          *
-         * [{ name: 'tom', age: 6 }, { name: 'jerry', age: 8 }].mapToHash(
+         * [{ name: 'tom', age: 6 }, { name: 'jerry', age: 8 }].mapToObject(
          *     v => v.age > 6 && v.name,
          *     v => v.age
          * )
          * // => { jerry: 8 }
          *
          */
-        mapToHash<T1>(
+        mapToObject<T1>(
             keyExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => string | number,
             valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any
         ): object
-        mapToHash<T1>(valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any): object
-        mapToHash(): { [k: string]: string | number }
+        mapToObject<T1>(valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any): object
+        mapToObject(): { [k: string]: string | number }
         /**
          * 字符排序 (字符逐位比较, 有3种排序方式供选择)
          * @param executor 排序回调 sortCore:排序处理器, val1, val2: 为待比较项

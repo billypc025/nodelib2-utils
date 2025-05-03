@@ -10,8 +10,8 @@ String.prototype.trim = function () {
 
 String.prototype.paramFormat = function (...arg) {
     let str = this
-    typeof arg[0] === 'object' && (arg = arg[0])
-    return str.replace(/\{\s*(\w+)\s*}/g, (s, k) => arg[k] || s)
+    typeof arg[0] === 'object' && (arg = arg[0] || {})
+    return str.replace(/\{\s*(\w+)\s*}/g, (s, k) => arg[k] ?? s)
 }
 
 String.prototype.toURL = function (baseOrPath) {

@@ -240,12 +240,12 @@ declare global {
          * 遍历执行fn并返回自身
          * @param fn 回调函数
          */
-        __forEach(fn: (key: string, value: any, self: this) => void): ThisType
+        __forEach(fn: (key: string, value: any, self: this) => void): ThisType<this>
         /**
          * 异步执行遍历fn并返回自身
          * @param fn 异步回调函数
          */
-        __forEachAsync(fn: (key: string, value: any, self: this) => Promise<void>): Promise<ThisType>
+        __forEachAsync(fn: (key: string, value: any, self: this) => Promise<void>): Promise<ThisType<this>>
         /**
          * 遍历回调每一项, 每一项的fn回调均返回true则最终返回true, 否则返回false
          * @param fn 回调函数
@@ -330,7 +330,7 @@ declare global {
          * obj.__add({ c: 3, d: 4 })
          * // => { a: 1, b: 2, c: 3, d: 4 }
          */
-        __add(obj: Record<string,any>): this
+        __add(obj: Record<string, any>): this
         /**
          * 根据fn回调的返回结果过滤并返回新的object
          * @param fn
@@ -497,12 +497,12 @@ declare global {
          * @example
          *
          * // 数组的每一项是 number 或 string 时
-         * [1,2,3].mapToHash()
+         * [1,2,3].mapToObject()
          * // => {1:1, 2:2, 3:3}
          *
          * @example
          *
-         * const output = ['info', 'warn', 'error', 'success'].mapToHash(v => msg => trace(`[${v.toUpperCase()}] ${msg}`))
+         * const output = ['info', 'warn', 'error', 'success'].mapToObject(v => msg => trace(`[${v.toUpperCase()}] ${msg}`))
          * output.info('hello world, farewell.')
          * // => [INFO] hello world, farewell.
          *
@@ -513,7 +513,7 @@ declare global {
          *     'warn',
          *     'error',
          *     'success'
-         * ].mapToHash(
+         * ].mapToObject(
          *     v => msg => trace(`[${v.toUpperCase()}] ${msg}`)
          * )
          * output.info('hello world, farewell.') // => [INFO] hello world, farewell.
@@ -522,7 +522,7 @@ declare global {
          * const { tom, jerry } = [
          *     { name: 'tom', color: 'blue' },
          *     { name: 'jerry', color: 'yellow' },
-         * ].mapToHash(
+         * ].mapToObject(
          *     v => v.name,
          *     v => __def(v, { say: msg => trace(`<span style='color:${v.color}'>${v.name}: ${msg}</span>`) }),
          * )
@@ -533,22 +533,22 @@ declare global {
          * @example
          *
          * // 特殊情况: 当转换后的key无法作为键时(即类型不是字符串或数字, 以及''), 该项将会被舍弃
-         * [1, null, 3].mapToHash(v=>v)
+         * [1, null, 3].mapToObject(v=>v)
          * // => {'1': 1, '3': 3}
          *
-         * [{ name: 'tom', age: 6 }, { name: 'jerry', age: 8 }].mapToHash(
+         * [{ name: 'tom', age: 6 }, { name: 'jerry', age: 8 }].mapToObject(
          *     v => v.age > 6 && v.name,
          *     v => v.age
          * )
          * // => { jerry: 8 }
          *
          */
-        mapToHash<T1>(
+        mapToObject<T1>(
             keyExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => string | number,
             valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any
         ): object
-        mapToHash<T1>(valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any): object
-        mapToHash(): { [k: string]: string | number }
+        mapToObject<T1>(valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any): object
+        mapToObject(): { [k: string]: string | number }
         /**
          * 字符排序 (字符逐位比较, 有3种排序方式供选择)
          * @param executor 排序回调 sortCore:排序处理器, val1, val2: 为待比较项
@@ -736,10 +736,10 @@ declare global {
          * // use mapFn
          * Array.fromLength(5, v => String.fromCharCode(v + 65)) // => [ 'A', 'B', 'C', 'D', 'E' ]
          */
-        fromLength<T>(
+        fromLength<T extends any[]>(
             len: number,
-            mapFn?: ((index: number, array: T<any>[]) => any) | string | object | any[] | number | boolean | symbol
-        ): T<any>[]
+            mapFn?: ((index: number, array: T) => any) | string | object | any[] | number | boolean | symbol
+        ): T
         /** [].charSort方法排序规则: 长度升序 + 字符unicode升序 */
         SORT_length_char: 0
         /** [].charSort方法排序规则: 字符unicode升序 + 长度升序 */

@@ -617,7 +617,7 @@ function pick(targetObj, ...keys) {
     }
     keys = keys.flat()
     if (keys.length == 0) return {}
-    return keys.mapToHash(
+    return keys.mapToObject(
         v => {
             if (typeof v == 'string') {
                 return v
