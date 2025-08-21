@@ -73,14 +73,16 @@ forEachReturn<T>(callbackfn: (value: T, index: number, array: readonly T[]) => v
 根据数组每项值, 生成以该值为 key 的键值对
 
 ```typescript
-mapToObject<T1>(
+mapToObject<T1 extends Object, T2>(
     keyExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => string | number,
-    valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any
-): object
+    valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => T2
+): T1 & { [k: string]: T2 }
 
-mapToObject<T1>(valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any): object
+mapToObject<T1 extends Object, T2>(
+    valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => T2
+): T1 & { [k: string]: T2 }
 
-mapToObject<T1 = (string | number)[]>(): { [k: string]: string | number }
+mapToObject(): T extends string | number ? Object & { [k: string]: T } : never
 ```
 
 ```javascript
@@ -129,7 +131,10 @@ jerry.say('hello')  // => <span style='color:yello'>jerry: hello</span>
 Array -> Object
 
 ```typescript
-toHash<T>(key?: string, valueGroup?: boolean, valKey?: string): { [key: string]: any }
+toHash<T1 = keyof T>(key?: T1, valueGroup?: false): { [k: string | number]: T }
+toHash<T1 = keyof T>(key: T1, valueGroup: true): { [k: string | number]: T[] }
+toHash<T1 = keyof T, T2 = keyof T>(key: T1, valueGroup: false, itemKey: T2): { [k: string | number]: any }
+toHash<T1 = keyof T, T2 = keyof T>(key: T1, valueGroup: true, itemKey: T2): { [k: string | number]: any[] }
 ```
 
 ```javascript

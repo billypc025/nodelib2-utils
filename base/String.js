@@ -14,12 +14,15 @@ String.prototype.paramFormat = function (...arg) {
     return str.replace(/\{\s*(\w+)\s*}/g, (s, k) => arg[k] ?? s)
 }
 
-String.prototype.toURL = function (baseOrPath) {
+String.prototype.toURL = function (baseOrPath, searchParams) {
     let str = this
-    if (/^https{0,1}\:\/\/[^\s]+/.test(str)) {
-        return new URL(baseOrPath || '/', str)
+    if (typeof baseOrPath == 'object' && !(baseOrPath instanceof URL)) {
+        searchParams = baseOrPath
+        baseOrPath = ''
     }
-    return new URL(str, baseOrPath)
+    const url = /^https{0,1}\:\/\/[^\s]+/.test(str) ? new URL(baseOrPath || '', str) : new URL(str, baseOrPath)
+    searchParams && Object.entries(searchParams).forEach(([k, v]) => url.searchParams.set(k, v))
+    return url
 }
 
 String.prototype.compare = function (str2, rule = 'lengthFirst') {

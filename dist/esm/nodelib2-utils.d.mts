@@ -33,7 +33,7 @@ interface time {
      * @param doubleDigit 是否显示2位数字, 默认显示1位
      */
     getFullDateArray(dateOrTime?: number | Date, doubleDigit?: false): number[]
-    getFullDateArray(dateOrTime?: number | Date, doubleDigit: true): string[]
+    getFullDateArray(dateOrTime: number | Date, doubleDigit: true): string[]
     /**
      * 根据日期或时间戳，获取时间字符串 (默认格式: hh:mm:ss)
      * @param dateOrTime 传入Date或时间戳, 缺省为Date.now()
@@ -240,22 +240,22 @@ declare global {
          * 遍历执行fn并返回自身
          * @param fn 回调函数
          */
-        __forEach(fn: (key: string, value: any, self: this) => void): ThisType
+        __forEach(fn: (key: string, value: any, self: this) => void): ThisType<this>
         /**
          * 异步执行遍历fn并返回自身
          * @param fn 异步回调函数
          */
-        __forEachAsync(fn: (key: string, value: any, self: this) => Promise<void>): Promise<ThisType>
+        __forEachAsync(fn: (key: string, value: any, self: this) => Promise<void>): Promise<ThisType<this>>
         /**
          * 遍历回调每一项, 每一项的fn回调均返回true则最终返回true, 否则返回false
          * @param fn 回调函数
          */
-        __every(fn: (key: string, value: any, self: this) => Boolean): Boolean
+        __every(fn: (key: string, value: any, self: this) => boolean): boolean
         /**
          * 遍历回调每一项, 只要有一项的回调fn返回false则最终返回false, 否则返回true
          * @param fn 回调函数
          */
-        __some(fn: (key: string, value: any, self: this) => Boolean): Boolean
+        __some(fn: (key: string, value: any, self: this) => boolean): boolean
         /**
          * 遍历生成新的Object, 每一组键值对都可用相应的处理器进行转换处理
          * @param keyExecutor 键处理器
@@ -301,11 +301,11 @@ declare global {
          * obj.update({ name: 'billy' })
          * trace(obj.name, obj.age)
          */
-        __map(valueExecutor: (value: any, key: string, self: this) => any): object
+        __map(valueExecutor: (value: any, key: string, self: this) => any): Object
         __map(
             keyExecutor: (key: string, value: any, self: this) => string | number,
             valueExecutor: (value: any, key: string, self: this) => any
-        ): object
+        ): Object
         /**
          * Object 转换为 Array,
          * @param valueExecutor 每一项处理器, 返回最终数组项
@@ -321,7 +321,7 @@ declare global {
          */
         __toArray(valueExecutor: (key: string, value: any, self: this, arrayReturn: any[]) => any): any[]
         /**
-         * 从目标对象中获取并新增属性
+         * 从目标对象中获取并新增属性, 返回源对象 (源对象会被更新)
          * @param obj
          *
          * @example
@@ -330,7 +330,7 @@ declare global {
          * obj.__add({ c: 3, d: 4 })
          * // => { a: 1, b: 2, c: 3, d: 4 }
          */
-        __add(obj: Record<string,any>): this
+        __add(obj: object): this
         /**
          * 根据fn回调的返回结果过滤并返回新的object
          * @param fn
@@ -350,7 +350,45 @@ declare global {
          * // => { '2':'lucy', '3':'lily' }
          *
          */
-        __filter(fn: (key: string, value: any, self: this) => Boolean): object
+        __filter(fn: (key: string, value: any, self: this) => boolean): Object
+        /**
+         * 删除多余的属性, 仅保留 remainKeys (会修改原对象)
+         * @param remainKeys
+         *
+         * @example
+         *
+         * // 通过remain方法只保留所需的字段, 对循环嵌套的对象遍历特别有用
+         *
+         * let obj = { id: 1, name: 'tom', age: 10 }
+         *
+         * trace(obj.__remain(['name', 'age']))
+         * // => {name: 'tom', age: 10}
+         *
+         * // 原始对象已被更改
+         * trace(obj)
+         * // => {name: 'tom', age: 10}
+         *
+         * // 也可以这样调用
+         * obj.__remain('name', 'age')
+         */
+        __remain(remainKeys: string[]): ThisType<this>
+        __remain(...remainKeys: string[]): ThisType<this>
+        /**
+         * 找到一个满足fn回调条件的{k,v}
+         * @param fn
+         *
+         * @example
+         *
+         * let items = [
+         *     { sid: 123, name: 'name123' },
+         *     { s_id: 543, s_name: 'name543' },
+         * ]
+         *
+         * items.map(item => item.__find(k => k.endsWith('id')).__value0)
+         * // => [123, 543]
+         *
+         */
+        __find(fn: (key: string, value: any, self: this) => boolean): Object
     }
 
     interface Array<T> {
@@ -359,7 +397,7 @@ declare global {
          *
          * @param key - 当Array每一项是{[key]:any}时, 可根据key进行转换, 默认值id
          * @param valueGroup - 生成value group，默认false
-         * @param valKey - 指定value对应的key
+         * @param itemKey - 指定value对应的key
          * @returns 键值对
          *
          * @example
@@ -376,8 +414,8 @@ declare global {
          */
         toHash<T1 = keyof T>(key?: T1, valueGroup?: false): { [k: string | number]: T }
         toHash<T1 = keyof T>(key: T1, valueGroup: true): { [k: string | number]: T[] }
-        toHash<T1 = keyof T, T2 = keyof T>(key: T1, valueGroup: false, valKey: T2): { [k: string | number]: any }
-        toHash<T1 = keyof T, T2 = keyof T>(key: T1, valueGroup: true, valKey: T2): { [k: string | number]: any[] }
+        toHash<T1 = keyof T, T2 = keyof T>(key: T1, valueGroup: false, itemKey: T2): { [k: string | number]: any }
+        toHash<T1 = keyof T, T2 = keyof T>(key: T1, valueGroup: true, itemKey: T2): { [k: string | number]: any[] }
         /**
          * 数组根据指标标识,计算数量
          * @param key - 要统计的key
@@ -422,54 +460,106 @@ declare global {
             mergeExecutor?: (target: object, source: object) => void
         ): Array<T1 & T2>
         /**
-         * 调用push后返回原数组对象，主要用于链式语法
-         * @param ...arg - 待操作对象
-         * @returns 返回原数组对象，可继续编写链式调用
+         * 调用push后返回原始数组，主要用于链式语法
+         * tips: add() 返回this, 可用于链式调用
+         * @param ...arg 待操作对象
+         * @returns 返回原数组，可继续编写链式调用
+         *
+         * @example
+         *
+         * // 加在数组末尾
+         * [1, 2, 3].add(4, 5, 6)
+         * // [1, 2, 3, 4, 5, 6]
          */
         add(...arg: T[]): T[]
         /**
-         * 调用unshift后返回原数组对象，主要用于链式语法
-         * @param ...arg - 待操作对象
-         * @returns 返回原数组对象，可继续编写链式调用
+         * 调用unshift后返回原始数组，主要用于链式语法
+         * tips: addFirst() 返回this, 可用于链式调用
+         * @param ...arg 待操作对象
+         * @returns 返回原数组，可继续编写链式调用
+         * @example
+         *
+         * // 加在数组开头
+         * [1, 2, 3].addFirst(4, 5, 6)
+         * // [4, 5, 6, 1, 2, 3]
          */
         addFirst(...arg: T[]): T[]
         /**
-         * 调用splice后返回原数组对象，主要用于链式语法
-         * @param startIndex - 开始索引
-         * @param deleteLength - 删除长度
-         * @returns 返回原数组对象，可继续编写链式调用
+         * 调用splice后返回原始数组，主要用于链式语法
+         * tips: remove() 返回this, 可用于链式调用, 默认删除第一项
+         * @param startIndex 开始索引
+         * @param deleteLength 删除长度
+         * @returns 返回原数组，可继续编写链式调用
+         *
+         * @example
+         * // 移除首项
+         * [1, 2, 3, 4].remove() // [2, 3, 4]
+         *
+         * // 移除下标为1的项
+         * [1, 2, 3, 4].remove(1) // [1, 3, 4]
+         *
+         * //从下标2开始, 删除2项
+         * [1, 2, 3, 4, 5].remove(2, 2) // [1, 2, 5]
+         *
          */
-        remove(startIndex: number, deleteLength: number): T[]
+        remove(startIndex: number, deleteLength?: number): T[]
         /**
-         * 删除指定的item，并返回原数组对象
+         * 删除指定的item
+         * tips: removeItem() 返回this, 可用于链式调用
          * @param item 要删除的item (若数组内未找到item,不做任何处理)
-         * @returns 返回原数组对象，可继续编写链式调用
+         * @returns 返回原数组，可继续编写链式调用
+         *
+         * @example
+         *
+         * // 移除 2
+         * [1, 2, 3, 4].removeItem(2)
+         * // [1, 3, 4]
          */
         removeItem(item: T): T[]
         /**
-         * 调用splice从末尾开始删除后返回原数组对象，主要用于链式语法
-         * @param deleteLength - 从末尾开始删除的长度
-         * @returns 返回原数组对象，可继续编写链式调用
+         * 调用splice从末尾开始删除后返回原始数组，主要用于链式语法
+         * tips: removeLast() 返回this, 可用于链式调用
+         * @param deleteLength 从末尾开始删除的长度, 默认: 1
+         * @returns 返回原数组，可继续编写链式调用
+         *
+         * @example
+         *
+         * // 删除末尾2项
+         * [1, 2, 3, 4].removeLast(2)
+         * // [1, 2]
          */
         removeLast(deleteLength: number): T[]
         /**
-         * 调用splice从开头开始删除后返回原数组对象，主要用于链式语法
-         * @param deleteLength - 从头开始删除的长度
-         * @returns 返回原数组对象，可继续编写链式调用
+         * 调用splice从开头开始删除后返回原始数组，主要用于链式语法
+         * tips: removeFirst() 返回this, 可用于链式调用
+         * @param deleteLength 从头开始删除的长度
+         * @returns 返回原数组，可继续编写链式调用
+         *
+         * @example
+         * // 删除开头2项
+         * [1, 2, 3, 4].removeFirst(2)
+         * // [3, 4]
          */
         removeFirst(deleteLength: number): T[]
         /**
-         * 调用forEach后返回原数组对象，主要用于链式语法
-         * @param callbackfn - callback function
-         * @param thisArg - this
-         * @returns 返回原数组对象，可继续编写链式调用
+         * 调用forEach后返回原始数组，主要用于链式语法
+         * tips: forEachReturn() 返回this, 可用于链式调用
+         * @param callbackfn callback function
+         * @returns 返回原数组，可继续编写链式调用
+         * @example
+         *
+         * [1,2].forEach(v=>trace(v)).add(3,4)
          */
-        forEachReturn(callbackfn: (value: T, index: number, array: readonly T[]) => void): T[]
-        forEachAsync(callbackfn: (value: T, index: number, array: readonly T[]) => Promise<void>): Promise<T[]>
+        forEachReturn(callbackfn: (item: T, index: number, array: readonly T[]) => void): T[]
+        /**
+         * 异步forEach
+         * tips: 原生forEach不支持async和await, 现在可以使用forEachAsync来实现
+         * @param callbackfn 异步回调
+         */
+        forEachAsync(callbackfn: (item: T, index: number, array: readonly T[]) => Promise<void>): Promise<T[]>
         /**
          * 根据传入的规则方法进行匹配，并返回第一个匹配项的计算结果
          * @param callbackfn
-         * @param thisArg
          * @returns 第一个匹配项的技术结果
          *
          * @example
@@ -480,7 +570,7 @@ declare global {
          * // => tom
          * 一般用于批量正则匹配拿到结果
          */
-        match(callbackfn: (value: T, index: number, array: readonly T[]) => void): any
+        match(callbackfn: (item: T, index: number, array: readonly T[]) => void): any
         /**
          * 根据数组每项值, 生成以该值为key的键值对
          *
@@ -543,14 +633,25 @@ declare global {
          * // => { jerry: 8 }
          *
          */
-        mapToObject<T1>(
+        mapToObject<T1 extends Object, T2>(
             keyExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => string | number,
-            valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any
-        ): object
-        mapToObject<T1>(valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => any): object
-        mapToObject(): { [k: string]: string | number }
+            valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => T2
+        ): T1 & { [k: string]: T2 }
+        mapToObject<T1 extends Object, T2>(
+            valueExecutor: (item: T, index: number, array: readonly T[], returnObj: T1) => T2
+        ): T1 & { [k: string]: T2 }
+        mapToObject(): T extends string | number ? Object & { [k: string]: T } : never
         /**
          * 字符排序 (字符逐位比较, 有3种排序方式供选择)
+         *
+         * <Feature>
+         * - 可逐字比较
+         * - 3种内置规则
+         * - 支持长度比较
+         * - 支持Ascii比较
+         * - 支持数字比较
+         * </Feature>
+         *
          * @param executor 排序回调 sortCore:排序处理器, val1, val2: 为待比较项
          * @param rule 排序规则(默认0) 0:第一排序字符串长度升序, 第二排序unicode字节码升序  1:第一排序unicode字节码升序, 第二排序字符串长度升序  2:数字优先 + 字符unicode升序 + 长度升序
          *
@@ -565,6 +666,10 @@ declare global {
          * ['home', 'hat', 'hot', 'how'].charSort() // 数组项不是object时, 可省略参数
          * // => [ 'hat', 'hot', 'how', 'home' ]
          *
+         * // 倒排
+         * ['home', 'hat', 'hot', 'how'].charSort((f, a, b) => -f(a, b))
+         * // => [ 'home', 'how', 'hot', 'hat' ]
+         *
          * //当数组项是object, 需要用某一属性进行排序, 如下:
          * [{k:'home'}, {k:'hat'}, {k:'hot'}, { k: 'how' }].charSort((f, a, b) => f(a.k, b.k))
          * // => [ { k: 'hat' }, { k: 'hot' }, { k: 'how' }, { k: 'home' } ]
@@ -574,17 +679,18 @@ declare global {
          *
          * [{k:'home'}, {k:'hat'}, {k:'hot'}, { k: 'how' }].charSort((f, a, b) => f(a.k, b.k), 1)
          * // => [ { k: 'hat' }, { k: 'home' }, { k: 'hot' }, { k: 'how' } ]
-         */
-        charSort(executor?: (sortCore: (val1: T, val2: T) => number, val1: T, val2: T) => void, rule?: 0 | 1 | 2): T[]
-        /**
-         * 字符排序 (字符逐位比较, 有3种排序方式供选择)
-         * @param rule 排序规则(默认0) 0:第一排序字符串长度升序, 第二排序unicode字节码升序  1:第一排序unicode字节码升序, 第二排序字符串长度升序  2:数字优先 + 字符unicode升序 + 长度升序
          *
-         * @example
+         * //部分使用字符排序
+         * // hot-x置顶
+         * [{ k: 'hot-3' }, { k: 'hot-1' }, { k: 'hot-x' }, { k: 'hot-2' }]
+         * .charSort((f, a, b) => (a.k == 'hot-x' ? -1 : b.k == 'hot-x' ? 1 : f(a.k, b.k)), 1)
+         * // => [ { k: 'hot-x' }, { k: 'hot-1' }, { k: 'hot-2' }, { k: 'hot-3' } ]
          *
-         * ['home', 'hat', 'hot', 'how'].charSort(1) // 先按字符排序, 再按长度排序
-         * // => [ 'hat', 'home', 'hot', 'how' ]
          */
+        charSort(
+            executor?: (sortCore: (item1: T, item2: T) => number, item1: T, item2: T) => void,
+            rule?: 0 | 1 | 2
+        ): T[]
         charSort(rule: 0 | 1 | 2): T[]
         /**
          * 增强的数组过滤器
@@ -594,35 +700,35 @@ declare global {
          * @example
          *
          * // 从给定的数组中过滤
-         * ['a','b','c','d'].fitlerBy(['b','c'])
+         * ['a','b','c','d'].filterBy(['b','c'])
          * // => ['b','c']
          *
-         * ['a','b_0','b_1','c','d'].fitlerBy(['b','c'], 'prefix')
+         * ['a','b_0','b_1','c','d'].filterBy(['b','c'], 'prefix')
          * // => ['b_0','b_1','c']
          *
-         * ['prefix_a','prefix_b','prefix_c','prefix_d'].fitlerBy(['b','c'], 'suffix')
+         * ['prefix_a','prefix_b','prefix_c','prefix_d'].filterBy(['b','c'], 'suffix')
          * // => ['prefix_b','prefix_c']
          *
          * // 反向过滤
-         * ['a','b','c','d'].fitlerBy(['b','c'], false)   // => ['a','d']
+         * ['a','b','c','d'].filterBy(['b','c'], false)   // => ['a','d']
          *
          * // 数组项为object
-         * [{name:'a'},{name:'b_0'},{name:'b_1'},{name:'c_0'},{name:'c_1'}].fitlerBy(['b','c'], {key:'name', fix:'prefix'})
+         * [{name:'a'},{name:'b_0'},{name:'b_1'},{name:'c_0'},{name:'c_1'}].filterBy(['b','c'], {key:'name', fix:'prefix'})
          * // => [{name:'b_0'},{name:'b_1'},{name:'c_0'},{name:'c_1'}]
          *
          * // 另一种入参方式
-         * [{name:'a'},{name:'b_0'},{name:'b_1'},{name:'c_0'},{name:'c_1'}].fitlerBy(['b','c'], {key:v=>v.name, fix:'prefix'})
+         * [{name:'a'},{name:'b_0'},{name:'b_1'},{name:'c_0'},{name:'c_1'}].filterBy(['b','c'], {key:v=>v.name, fix:'prefix'})
          * // => [{name:'b_0'},{name:'b_1'},{name:'c_0'},{name:'c_1'}]
          *
          * //用指定的string来过滤数组项
-         * ['a','b_0','b_1','c'].fitlerBy('b', 'prefix')
+         * ['a','b_0','b_1','c'].filterBy('b', 'prefix')
          * // => ['b_0','b_1']
          *
-         * [{name:'a'},{name:'b_0'},{name:'b_1'},{name:'c'}].fitlerBy('b', {key:v=>v.name,fix:'prefix'})
+         * [{name:'a'},{name:'b_0'},{name:'b_1'},{name:'c'}].filterBy('b', {key:v=>v.name,fix:'prefix'})
          * // => ['b_0','b_1']
          *
          * // 反选 - 过滤出前缀不为b的项
-         * ['a','b_0','b_1','c'].fitlerBy('b', {contain:false, fix:'prefix'})
+         * ['a','b_0','b_1','c'].filterBy('b', {contain:false, fix:'prefix'})
          * // => ['a','c']
          *
          * //过滤出非空项
@@ -634,13 +740,13 @@ declare global {
          * // => ['b_102','c_903']
          */
         filterBy(
-            filtValue: (val: T, index: number, array: T[]) => boolean | any[] | string | boolean | RegExp,
+            filtValue: (item: T, index: number, array: T[]) => boolean | any[] | string | boolean | RegExp,
             option?:
                 | true
                 | false
                 | 'prefix'
                 | 'suffix'
-                | { key?: string | ((val: T) => any); contain?: true | false; fix?: 'prefix' | 'suffix' }
+                | { key?: string | ((item: T) => any); contain?: true | false; fix?: 'prefix' | 'suffix' }
         ): T[]
         /**
          * 取数组开头的n项 (1 ≤ n ≤ length, 默认1)
@@ -736,10 +842,10 @@ declare global {
          * // use mapFn
          * Array.fromLength(5, v => String.fromCharCode(v + 65)) // => [ 'A', 'B', 'C', 'D', 'E' ]
          */
-        fromLength<T>(
+        fromLength<T extends any[]>(
             len: number,
-            mapFn?: ((index: number, array: T<any>[]) => any) | string | object | any[] | number | boolean | symbol
-        ): T<any>[]
+            mapFn?: ((index: number, array: T) => any) | string | object | any[] | number | boolean | symbol
+        ): T
         /** [].charSort方法排序规则: 长度升序 + 字符unicode升序 */
         SORT_length_char: 0
         /** [].charSort方法排序规则: 字符unicode升序 + 长度升序 */
@@ -946,6 +1052,7 @@ declare global {
         /**
          * 返回一个URL对象
          * @param baseOrPath 根据当前字符串判断入参是base还是path,具体看示例
+         * @param searchParams 用于生成 searchParams 的键值对
          * @returns URL对象
          *
          * @example
@@ -958,8 +1065,23 @@ declare global {
          * //当前字符串是base:
          * 'https://test.com'.toURL('/')
          * 'https://test.com'.toURL('/api/login')
+         *
+         * // with searchParams:
+         * 'path'.toURL('https://test.com/api/', {name:'name'})
+         *
+         * // 也可以省略第一个参数 (主字符串必须是一个有效的url)
+         * 'https://test.com'.toURL({name:'name'})
          */
-        toURL(baseOrPath: string): URL
+        toURL(baseOrPath: string, searchParams?: Record<string, string | number>): URL
+        /**
+         * 返回一个URL对象
+         * @param searchParams 用于生成 searchParams 的键值对
+         * @returns URL对象
+         *
+         * @example
+         * 'https://test.com/api/'.toURL({name:'name'})
+         */
+        toURL(searchParams: Record<string, string | number>): URL
         /**
          * 比较2个字符串的大小
          * @param str - 要比较的字符串
@@ -1207,14 +1329,14 @@ declare global {
      *   name: __def_gs(()=>{return ''},v=>{})
      * })
      */
-    function __def<T>(obj: T, tag: string, properties: object): T
+    function __def<T extends Object>(obj: T, tag: string, properties: object): T
     /**
      * 在目标对象上调用Object.defineProperties, 标记位默认'ecw'
      * @param obj 目标对象
      * @param properties 属性对象
      * @returns 扩展属性后的原始对象
      */
-    function __def<T>(obj: T, properties: object): T
+    function __def<T extends Object>(obj: T, properties: object): T
     /**
      * 与__def相似, 区别在于__def仅定义属性, __def_bind会自动将属性中的方法bind到目标对象
      * @param obj 目标对象
@@ -1244,29 +1366,29 @@ declare global {
      * 使用defineProperty可以通过属性描述操作符对子属性进行自定义, 另外__def_bind支持了方法到对象的自动绑定(这个绑定只针对子属性是Function,并且需要调用this)
      * 适用场景: 可用于内置的底层方法,用__def_bind控制属性的可操作性及是否可枚举, 可以达到关键对象防篡改的目的。还可用于某个对象的方法在长调用链中进行传递时保持this指向正确.
      */
-    function __def_bind<T>(obj: T, tag: string, properties: object): T
+    function __def_bind<T extends Object>(obj: T, tag: string, properties: object): T
     /**
      * 在目标对象上调用Object.defineProperties,并bind到目标对象 标记位默认'ecwb'
      * @param obj 目标对象
      * @param properties 属性对象
      * @returns 扩展属性后的原始对象
      */
-    function __def_bind<T>(obj: T, properties: object): T
-    function __def_value<T>(descTag: string, value: any): object
-    function __def_value<T>(value: any): object
-    function __def_get<T>(descTag: string, getter: () => any): object
-    function __def_get<T>(getter: () => any): object
-    function __def_set<T>(descTag: string, setter: (val: any) => void): object
-    function __def_set<T>(setter: (val: any) => void): object
-    function __def_gs<T>(descTag: string, getter: () => any, setter: (val: any) => void): object
-    function __def_gs<T>(getter: () => any, setter: (val: any) => void): object
+    function __def_bind<T extends Object>(obj: T, properties: object): T
+    function __def_value(descTag: string, value: any): Object
+    function __def_value(value: any): Object
+    function __def_get(descTag: string, getter: () => any): Object
+    function __def_get(getter: () => any): Object
+    function __def_set(descTag: string, setter: (val: any) => void): Object
+    function __def_set(setter: (val: any) => void): Object
+    function __def_gs(descTag: string, getter: () => any, setter: (val: any) => void): Object
+    function __def_gs(getter: () => any, setter: (val: any) => void): Object
 
     /**
      * 判断传入的值是否是一个数组
      * @param value - 传入的值
      * @returns true/false
      */
-    function isArray(value: any): boolen
+    function isArray(value: any): boolean
     /**
      * 在给定的范围[x,y)中取随机值 (左闭右开)
      * @param a - 范围数组,确定取随机数的范围
@@ -1440,7 +1562,7 @@ declare global {
      * __merge([{ id: 1, name: 'tom' }, { id: 2, name: 'jerry' }], [{ id: 1, age: 20 }, { id: 2, age: 23 }])
      * // => [ { id: 1, name: 'tom', age: 20 }, { id: 2, name: 'jerry', age: 23 } ]
      */
-    function __merge(a: { [k: string]: any }, b: { [k: string]: any }, cover?: boolean): object
+    function __merge(a: { [k: string]: any }, b: { [k: string]: any }, cover?: boolean): Object
     /**
      * 从obj中取property的值,如property不存在, 返回指定的默认值
      * 等同于 obj[key] ?? defaultValue, 主要用于获取动态计算key
@@ -1571,7 +1693,7 @@ declare global {
      * 合并所有对象到第一个入参对象
      * @param arg
      */
-    function __mergeAll(...arg): object
+    function __mergeAll(...arg): Object
     function sortByString<T>(list: T[]): T[]
     /**
      * 比较2个字符串的大小
@@ -1603,9 +1725,9 @@ declare global {
      * c
      */
     function compareString(a: string, b: string, rule: 'lengthFirst' | 'charFirst'): number
-    function __clone(obj: object, keys: string[]): object
-    function __cloneWithFilter(obj: object, keys: string[]): object
-    function __override(to: object, from: object): object
+    function __clone(obj: object, keys: string[]): Object
+    function __cloneWithFilter(obj: object, keys: string[]): Object
+    function __override(to: object, from: object): Object
     /**
      * 异步延迟
      * @param callback 延迟结束后的回调
@@ -1770,7 +1892,7 @@ declare global {
      * pick(obj, ['a', 'c']) // => {a:1, c:3}
      *
      */
-    function pick(obj: object, ...keys: string[]): object
+    function pick(obj: object, ...keys: string[]): Object
     /**
      * 计算目标字符串的字节长度 (部分中文及全角符号计作2)
     部分 *
@@ -1801,4 +1923,4 @@ declare global {
     function getBytesLen(str: any): number
 }
 
-export const g: Global
+export {}

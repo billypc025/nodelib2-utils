@@ -52,6 +52,10 @@ __setup(
                 Object.keys(this).forEach(k => !list.includes(k) && delete this[k])
             return this
         },
+        __find(fn) {
+            let key = Object.keys(this).find(k => fn(k, this[k], this))
+            return key ? { [key]: this[key] } : null
+        },
     },
     Object.prototype
 )

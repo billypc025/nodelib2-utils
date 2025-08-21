@@ -94,7 +94,10 @@ format(template: string): string
 解析有效的 url，返回一个 URL 对象
 
 ```typescript
-toURL(baseOrPath: string): URL
+toURL(baseOrPath: string, searchParams?: Record<string, string | number>): URL
+
+// 主字符串必须是一个可解析的URL字符串
+toURL(searchParams: Record<string, string | number>): URL
 ```
 
 ```javascript
@@ -106,6 +109,12 @@ toURL(baseOrPath: string): URL
 //当前字符串是base:
 'https://domain.com'.toURL('/')
 'https://domain.com'.toURL('/api/login')
+
+// with searchParams:
+'path'.toURL('https://test.com/api/', { name: 'name' })
+
+// 也可以省略第一个参数 (主字符串必须是一个有效的url)
+'https://test.com'.toURL({ name: 'name' })
 ```
 
 ### 5. 其他方法

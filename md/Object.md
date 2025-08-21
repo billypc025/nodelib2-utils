@@ -27,7 +27,7 @@ obj.__add({ c: 3, d: 4 })
 ```typescript
 // typescript declaration
 
-__every(fn: (key: string, value: any, self: this) => Boolean): Boolean
+__every(fn: (key: string, value: any, self: this) => boolean): boolean
 ```
 
 | param | description |
@@ -43,7 +43,7 @@ __every(fn: (key: string, value: any, self: this) => Boolean): Boolean
 ```typescript
 // typescript declaration
 
-__filter(fn: (key: string, value: any, self: this) => Boolean): object
+__filter(fn: (key: string, value: any, self: this) => boolean): object
 ```
 
 | param | description |
@@ -73,7 +73,7 @@ arr.__filter(k => k >= 2)
 ```typescript
 // typescript declaration
 
-__forEach(fn: (key: string, value: any, self: this) => void): this
+__forEach(fn: (key: string, value: any, self: this) => void): ThisType<this>
 ```
 
 | param | description |
@@ -89,7 +89,7 @@ __forEach(fn: (key: string, value: any, self: this) => void): this
 ```typescript
 // typescript declaration
 
-__forEachAsync(fn: (key: string, value: any, self: this) => Promise<void>): Promise<this>
+__forEachAsync(fn: (key: string, value: any, self: this) => Promise<void>): Promise<ThisType<this>>
 ```
 
 | param | description  |
@@ -133,12 +133,12 @@ get __keys(): string[]
 ```typescript
 // typescript declaration
 
-__map(valueExecutor: (key: string, value: any, self: this) => any): object
+__map(valueExecutor: (value: any, key: string, self: this) => any): Object
 
 __map(
     keyExecutor: (key: string, value: any, self: this) => string | number,
     valueExecutor: (value: any, key: string, self: this) => any
-): object
+): Object
 ```
 
 | param           | description |
@@ -165,9 +165,9 @@ obj.__map(
 ```typescript
 // typescript declaration
 
-__remain(remainKeys: string[]): this
+__remain(remainKeys: string[]): ThisType<this>
 
-__remain(...remainKeys: string[]): this
+__remain(...remainKeys: string[]): ThisType<this>
 ```
 
 | param        | description |
@@ -193,7 +193,7 @@ trace(a) // => {name:'tom',age:10}
 ```typescript
 // typescript declaration
 
-__some(fn: (key: string, value: any, self: this) => Boolean): Boolean
+__some(fn: (key: string, value: any, self: this) => boolean): boolean
 ```
 
 | param | description |
@@ -297,4 +297,30 @@ export default () => {
         </div>
     )
 }
+```
+
+## `__find()`
+
+找到一个满足 fn 回调条件的{k,v}
+
+#### 语法
+
+```typescript
+// typescript declaration
+
+__find(fn: (key: string, value: any, self: this) => boolean): Object
+```
+
+| param | description |
+| ----- | ----------- |
+| `fn`  | 回调函数    |
+
+```javascript
+let items = [
+    { sid: 123, name: 'name123' },
+    { s_id: 543, s_name: 'name543' },
+]
+
+items.map(item => item.__find(k => k.endsWith('id')).__value0)
+// => [123, 543]
 ```

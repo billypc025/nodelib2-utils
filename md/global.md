@@ -5,27 +5,27 @@
 在目标对象上调用 Object.defineProperties (与第三方包 d 类似, 可参看https://www.npmjs.com/package/d)
 
 ```typescript
-__def<T>(obj: T, tag: string, properties: object): T
-__def<T>(obj: T, properties: object): T
+__def<T extends object>(obj: T, tag: string, properties: object): T
+__def<T extends object>(obj: T, properties: object): T
 
 // __def_bind与__def的区别是，__def_bind会将属性bind到目标对象
-__def_bind<T>(obj: T, tag: string, properties: object): T
-__def_bind<T>(obj: T, properties: object): T
+__def_bind<T extends object>(obj: T, tag: string, properties: object): T
+__def_bind<T extends object>(obj: T, properties: object): T
 
 // 生成一个定义为 value 的 properties 对象
-__def_value<T>(descTag: string, value: any): object
-__def_value<T>(value: any): object
+__def_value(descTag: string, value: any): object
+__def_value(value: any): object
 
 // 生成一个定义为 getter 的 properties 对象
-__def_get<T>(descTag: string, getter: () => any): object
-__def_get<T>(getter: () => any): object
+__def_get(descTag: string, getter: () => any): object
+__def_get(getter: () => any): object
 // 生成一个定义为 setter 的 properties 对象
-__def_set<T>(descTag: string, setter: (val: any) => void): object
-__def_set<T>(setter: (val: any) => void): object
+__def_set(descTag: string, setter: (val: any) => void): object
+__def_set(setter: (val: any) => void): object
 
 // 生成一个定义为 getter & setter 的 properties 对象
-__def_gs<T>(descTag: string, getter: () => any, setter: (val: any) => void): object
-__def_gs<T>(getter: () => any, setter: (val: any) => void): object
+__def_gs(descTag: string, getter: () => any, setter: (val: any) => void): object
+__def_gs(getter: () => any, setter: (val: any) => void): object
 ```
 
 > 用 `'e'` `'c'` `w'` 来来表示 `enumerable` `configurable` `writable`  
