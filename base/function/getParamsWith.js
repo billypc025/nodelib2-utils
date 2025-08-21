@@ -1,6 +1,6 @@
 const varName = '[a-zA-Z0-9_$#]+'
 const colon = '\\?{0,1}\\:'
-const base = '(object|string|boolean|number|bigint|symbol|function|Function|any)'
+const base = '(object|string|boolean|number|bigint|symbol|function|Function|URL|any)'
 const array = `${base}\\[\\]`
 const object = `{[^{}]+}`
 const wildcard = 'object|\\*'
@@ -65,28 +65,35 @@ function isFit(val, defType) {
         let valType = getValueType(val)
         if (defType.indexOf('|') > 0) {
             return defType.split('|').some(v => {
-                if (v.toLowerCase() === valType) {
-                    return true
-                }
+                if (v.toLowerCase() === valType) return true
                 if (Array.isArray(valType)) {
                     return (
                         v === 'any[]' ||
-                        valType[0] + '[]' === v ||
-                        (valType[0] === 'any' && v.substring(v.length - 2) === '[]')
+                        `${valType[0]}[]` === v ||
+                        (valType[0] === 'any' && v.substring(v.length - 2) === '[]') ||
+                        (valType[0] === 'object' && `${getPrototypeName(valType[0])}[]` === v)
                     )
                 }
+                if (valType == 'object') return v == getPrototypeName(val)
                 return false
             })
         }
         if (Array.isArray(valType)) {
             return (
                 defType === 'any[]' ||
-                valType[0] + '[]' === defType ||
-                (valType[0] === 'any' && defType.substring(defType.length - 2) === '[]')
+                `${valType[0]}[]` === defType ||
+                (valType[0] === 'any' && defType.substring(defType.length - 2) === '[]') ||
+                (valType[0] === 'object' && `${getPrototypeName(valType[0])}[]` === defType)
             )
         }
-        return defType === valType
+        if (defType === valType) return true
+        if (valType == 'object') return defType == getPrototypeName(val)
+        return false
     }
+}
+
+function getPrototypeName(val) {
+    return Object.prototype.toString.call(val).replace(/(\[)object |(\])/g, '')
 }
 
 function getValueType($val) {

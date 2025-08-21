@@ -21,7 +21,7 @@ String.prototype.toURL = function (baseOrPath, searchParams) {
         baseOrPath = ''
     }
     const url = /^https{0,1}\:\/\/[^\s]+/.test(str) ? new URL(baseOrPath || '', str) : new URL(str, baseOrPath)
-    searchParams && Object.entries(searchParams).forEach(([k, v]) => url.searchParams.set(k, v))
+    searchParams && Object.entries(searchParams).forEach(([k, v]) => url.searchParams.set(k, v ?? ''))
     return url
 }
 

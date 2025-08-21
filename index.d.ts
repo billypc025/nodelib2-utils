@@ -857,7 +857,7 @@ declare global {
     interface FunctionConstructor {
         /**
          * 根据参数匹配规则(用一个数组来描述函数重载类型), 识别参数值 (用于实现重载函数的参数识别)
-         * @param paramDefRules - 参数匹配规则列表, 可识别函数入参的ts类型声明, 如(url:string, param:object)=>void
+         * @param paramDefRules - 参数匹配规则列表, 可识别函数入参的ts类型声明, 如(url:string|URL, param:object)=>void
          * @param args - 直接传入argument进行参数解析
          * @returns 入参键值对
          *
@@ -900,10 +900,10 @@ declare global {
          * hello({ name: 'billy', age: 40 })
          * // => hello billy. I am 40 years old.
          *
-         * 注1: 目前支持基础类型如 string, number, boolean, object, function, string[], number[], object[], {[k]:<type>}等, 语法可参照函数参数的ts类型声明
+         * 注1: 目前支持基础类型如 string, number, boolean, object, function, string[], number[], object[], {[k]:<type>}, URL等, 语法可参照函数参数的ts类型声明
          * 注2: 如果入参是一个包含所有字段的Obj, 定义应直接为'object' (见示例参数规则列表的最后一项)
-         * 注3: 须注意['a:string, b?:string', 'b:string']和['a:string, b:string', 'b:string']是不一样的两个匹配规则
-         *      前者可以简写为['a:string, b?:string'], 或者直接将入参写在函数定义内, 而后者不行
+         * 注3: 须注意['a:string, b?:string', 'a:string']和['a:string, b:string', 'b:string']是不一样的两个匹配规则
+         *      前者可以简写为['a:string, b?:string'], 或者直接将入参写在函数定义内; 而后者有两个不同的入参方式
          *
          * @example
          *

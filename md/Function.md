@@ -4,6 +4,16 @@
 
 根据参数匹配规则(用一个数组来描述函数重载类型), 识别参数值 (用于实现重载函数的参数识别)
 
+注意:
+
+1. 目前支持基础类型如 `string`, `number`, `boolean`, `object`, `function`, `string[]`, `number[]`, `object[]`, `{[k]:<type>}`, `URL` 等, 语法可参照函数参数的 ts 类型声明
+
+2. 如果入参是一个包含所有字段的 Obj, 定义应直接为`'object'` (见示例参数规则列表的最后一项)
+
+3. 须注意以下两项是不一样的：   
+    `['a:string, b?:string', 'a:string']`  != `['a:string, b:string', 'b:string']`   
+   前者可以简写为 `['a:string, b?:string']` , 或者直接将入参写在函数定义内; 而后者有两种不一样的入参方式
+
 #### 定义
 
 ```typescript
@@ -96,13 +106,7 @@ createInterval('heartbeat', socket.sendHeartbeat, 90)
 ```js
 // 示例三
 function foo() {
-    let { a = 'a', b } = Function.getParamsWith(
-        [
-            'a:string, b:string',
-            'b:string'
-        ],
-        arguments
-    )
+    let { a = 'a', b } = Function.getParamsWith(['a:string, b:string', 'b:string'], arguments)
     trace(a + b)
 }
 foo() // 缺失了必要参数, throw Error
@@ -113,13 +117,7 @@ foo('B') // => aB   (必要参数只有1个，匹配到第2条规则)
 ```js
 // 示例四: 类型为{[key:string]: <type>}
 function test(...arg) {
-    let { a, b } = Function.getParamsWith(
-        [
-            'a:{[k]:string[]}, b:{add:string}',
-            'b:{add:string}, a:{[k]:string[]}'
-        ],
-        arg
-    )
+    let { a, b } = Function.getParamsWith(['a:{[k]:string[]}, b:{add:string}', 'b:{add:string}, a:{[k]:string[]}'], arg)
     trace({ a, b })
 }
 
